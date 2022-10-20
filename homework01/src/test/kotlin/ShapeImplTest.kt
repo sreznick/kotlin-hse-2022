@@ -1,5 +1,4 @@
 import org.junit.jupiter.api.Assertions.*
-import org.junit.jupiter.api.function.Executable;
 import kotlin.test.Test
 
 internal class ShapeImplTest {
@@ -19,7 +18,7 @@ internal class ShapeImplTest {
         )
 
         cases.forEach {
-            assertEquals(it.second, it.first.ndim)
+            assertEquals(it.second, it.first.dimNumber)
         }
     }
 
