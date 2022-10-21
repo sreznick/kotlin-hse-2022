@@ -1,0 +1,13 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<testsuite name="NDArrayTest" tests="7" skipped="0" failures="0" errors="0" timestamp="2022-10-21T23:08:05" hostname="dmitrii-nitroan51555" time="0.03">
+  <properties/>
+  <testcase name="testAdd()" classname="NDArrayTest" time="0.022"/>
+  <testcase name="testSet1D()" classname="NDArrayTest" time="0.001"/>
+  <testcase name="testSet2D()" classname="NDArrayTest" time="0.001"/>
+  <testcase name="testSet3D()" classname="NDArrayTest" time="0.001"/>
+  <testcase name="testZeros()" classname="NDArrayTest" time="0.001"/>
+  <testcase name="testCopy()" classname="NDArrayTest" time="0.001"/>
+  <testcase name="testOnes()" classname="NDArrayTest" time="0.001"/>
+  <system-out><![CDATA[]]></system-out>
+  <system-err><![CDATA[]]></system-err>
+</testsuite>
