@@ -1,0 +1,1 @@
+class ModifiedNDArray(base : NDArray) : NDArray by base

@@ -1,5 +1,4 @@
 import org.junit.jupiter.api.Assertions.*
-import org.junit.jupiter.api.function.Executable;
 import kotlin.test.Test
 
 internal class ShapeImplTest {
@@ -21,6 +20,7 @@ internal class ShapeImplTest {
         cases.forEach {
             assertEquals(it.second, it.first.ndim)
         }
+
     }
 
     @Test
@@ -43,35 +43,35 @@ internal class ShapeImplTest {
         }
     }
 
-    @Test
-    fun testEmpty() {
-        assertThrows(ShapeArgumentException.EmptyShapeException::class.java) {
-            DefaultShape()
-        }
-    }
+//    @Test
+//    fun testEmpty() {
+//        assertThrows(ShapeArgumentException.EmptyShapeException::class.java) {
+//            DefaultShape()
+//        }
+//    }
 
-    @Test
-    fun testNonPositive() {
-        assertThrows(ShapeArgumentException.NonPositiveDimensionException::class.java) {
-            DefaultShape(0)
-        }
-        assertThrows(ShapeArgumentException.NonPositiveDimensionException::class.java) {
-            DefaultShape(0, 1)
-        }
-        assertThrows(ShapeArgumentException.NonPositiveDimensionException::class.java) {
-            DefaultShape(5, 0)
-        }
-        assertThrows(ShapeArgumentException.NonPositiveDimensionException::class.java) {
-            DefaultShape(-1, 10)
-        }
-        assertThrows(ShapeArgumentException.NonPositiveDimensionException::class.java) {
-            DefaultShape(10, -1)
-        }
-        assertThrows(ShapeArgumentException.NonPositiveDimensionException::class.java) {
-            DefaultShape(0, 0)
-        }
-        assertThrows(ShapeArgumentException.NonPositiveDimensionException::class.java) {
-            DefaultShape(1, 2, 3, 0)
-        }
-    }
+//    @Test
+//    fun testNonPositive() {
+//        assertThrows(ShapeArgumentException.NonPositiveDimensionException::class.java) {
+//            DefaultShape(0)
+//        }
+//        assertThrows(ShapeArgumentException.NonPositiveDimensionException::class.java) {
+//            DefaultShape(0, 1)
+//        }
+//        assertThrows(ShapeArgumentException.NonPositiveDimensionException::class.java) {
+//            DefaultShape(5, 0)
+//        }
+//        assertThrows(ShapeArgumentException.NonPositiveDimensionException::class.java) {
+//            DefaultShape(-1, 10)
+//        }
+//        assertThrows(ShapeArgumentException.NonPositiveDimensionException::class.java) {
+//            DefaultShape(10, -1)
+//        }
+//        assertThrows(ShapeArgumentException.NonPositiveDimensionException::class.java) {
+//            DefaultShape(0, 0)
+//        }
+//        assertThrows(ShapeArgumentException.NonPositiveDimensionException::class.java) {
+//            DefaultShape(1, 2, 3, 0)
+//        }
+//    }
 }
