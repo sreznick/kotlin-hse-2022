@@ -83,7 +83,7 @@ interface NDArray: SizeAware, DimentionAware {
  *
  * Инициализация - через factory-методы ones(shape: Shape), zeros(shape: Shape) и метод copy
  */
-class DefaultNDArray private constructor(private val shape: DefaultShape, private val values: IntArray): NDArray {
+class DefaultNDArray private constructor(val shape: DefaultShape, private val values: IntArray): NDArray {
 
     companion object {
         fun zeros(shape: DefaultShape): DefaultNDArray = DefaultNDArray(shape, IntArray(shape.size){ 0 })
@@ -119,7 +119,13 @@ class DefaultNDArray private constructor(private val shape: DefaultShape, privat
             }
         }
 
-        TODO("Not yet implemented")
+        if (other.ndim == ndim) {
+            for (i in 0 until size) {
+                values[i] += other.at(linearIndexToPoint(i, shape))
+            }
+        } else {
+            TODO("Not yet implemented")
+        }
     }
 
     override fun dot(other: NDArray): NDArray {
@@ -146,6 +152,16 @@ class DefaultNDArray private constructor(private val shape: DefaultShape, privat
         }
 
         return index
+    }
+
+    private fun linearIndexToPoint(index: Int, shape: DefaultShape): Point {
+        val coordinates = IntArray(shape.ndim){0}
+        var index = index
+        for (i in ndim - 1 downTo 0) {
+            coordinates[i] = index % shape.dim(i)
+            index /= dim(i)
+        }
+        return DefaultPoint(*coordinates)
     }
 }
 
