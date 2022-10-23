@@ -1,93 +1,120 @@
-
-interface NDArray: SizeAware, DimentionAware {
-    /*
-     * Получаем значение по индексу point
-     *
-     * Если размерность point не равна размерности NDArray
-     * бросаем IllegalPointDimensionException
-     *
-     * Если позиция по любой из размерностей некорректна с точки зрения
-     * размерности NDArray, бросаем IllegalPointCoordinateException
-     */
+interface NDArray : SizeAware, DimensionAware {
     fun at(point: Point): Int
 
-    /*
-     * Устанавливаем значение по индексу point
-     *
-     * Если размерность point не равна размерности NDArray
-     * бросаем IllegalPointDimensionException
-     *
-     * Если позиция по любой из размерностей некорректна с точки зрения
-     * размерности NDArray, бросаем IllegalPointCoordinateException
-     */
     fun set(point: Point, value: Int)
 
-    /*
-     * Копируем текущий NDArray
-     *
-     */
     fun copy(): NDArray
 
-    /*
-     * Создаем view для текущего NDArray
-     *
-     * Ожидается, что будет создан новая реализация  интерфейса.
-     * Но она не должна быть видна в коде, использующем эту библиотеку как внешний артефакт
-     *
-     * Должна быть возможность делать view над view.
-     *
-     * In-place-изменения над view любого порядка видна в оригнале и во всех view
-     *
-     * Проблемы thread-safety игнорируем
-     */
     fun view(): NDArray
 
-    /*
-     * In-place сложение
-     *
-     * Размерность other либо идентична текущей, либо на 1 меньше
-     * Если она на 1 меньше, то по всем позициям, кроме "лишней", она должна совпадать
-     *
-     * Если размерности совпадают, то делаем поэлементное сложение
-     *
-     * Если размерность other на 1 меньше, то для каждой позиции последней размерности мы
-     * делаем поэлементное сложение
-     *
-     * Например, если размерность this - (10, 3), а размерность other - (10), то мы для три раза прибавим
-     * other к каждому срезу последней размерности
-     *
-     * Аналогично, если размерность this - (10, 3, 5), а размерность other - (10, 5), то мы для пять раз прибавим
-     * other к каждому срезу последней размерности
-     */
     fun add(other: NDArray)
 
-    /*
-     * Умножение матриц. Immutable-операция. Возвращаем NDArray
-     *
-     * Требования к размерности - как для умножения матриц.
-     *
-     * this - обязательно двумерна
-     *
-     * other - может быть двумерной, с подходящей размерностью, равной 1 или просто вектором
-     *
-     * Возвращаем новую матрицу (NDArray размерности 2)
-     *
-     */
     fun dot(other: NDArray): NDArray
 }
 
-/*
- * Базовая реализация NDArray
- *
- * Конструкторы должны быть недоступны клиенту
- *
- * Инициализация - через factory-методы ones(shape: Shape), zeros(shape: Shape) и метод copy
- */
-class DefaultNDArray: NDArray {
+
+open class DefaultNDArray private constructor(private val array: IntArray, private val shape: Shape) : NDArray {
+    override val ndim: Int = shape.ndim
+    override fun dim(i: Int): Int = shape.dim(i)
+    override val size: Int = array.size
+
+    companion object {
+        fun ones(shape: Shape): NDArray = DefaultNDArray(IntArray(shape.size) { 1 }, shape)
+
+        fun zeros(shape: Shape): NDArray = DefaultNDArray(IntArray(shape.size) { 0 }, shape)
+
+        protected fun nextIndex(point: Point, shape: Shape): Point {
+            var overflow = 1
+            val coords = IntArray(point.ndim) { 0 }
+            for (i in shape.ndim - 1 downTo 0) {
+                coords[i] = (point.dim(i) + overflow) % shape.dim(i)
+                overflow = (point.dim(i) + overflow) / shape.dim(i)
+            }
+            return DefaultPoint(*coords)
+        }
+    }
+
+    private fun get1DIndex(point: Point): Int {
+        if (point.ndim != ndim) {
+            throw NDArrayException.IllegalPointDimensionException()
+        }
+
+        var index: Int = point.dim(0)
+        for (i in 1 until point.ndim) {
+            index = dim(i) * index + point.dim(i)
+        }
+
+        if (index >= size) {
+            throw NDArrayException.IllegalPointCoordinateException()
+        }
+
+        return index
+    }
+
+    override fun at(point: Point): Int = array[get1DIndex(point)]
+
+    override fun set(point: Point, value: Int) {
+        array[get1DIndex(point)] = value
+    }
+
+    override fun copy(): NDArray = DefaultNDArray(array.clone(), shape)
+
+    override fun add(other: NDArray) {
+        if (other.ndim + 1 != ndim && other.ndim != ndim || (0 until other.ndim).any { dim(it) != other.dim(it) }) {
+            throw NDArrayException.NonMatchingDimensionsException()
+        }
+
+        var curIndex: Point = DefaultPoint(*IntArray(other.ndim) { 0 })
+        val otherShape: Shape = DefaultShape(*(0 until other.ndim).map { other.dim(it) }.toIntArray())
+        val secondDim = if (ndim != other.ndim) dim(ndim - 1) else 1
+        for (i in 0 until secondDim) {
+            for (j in 0 until other.size) {
+                array[i + j * secondDim] += other.at(curIndex)
+                curIndex = nextIndex(curIndex, otherShape)
+            }
+        }
+
+    }
+
+    override fun dot(other: NDArray): NDArray {
+        if (ndim != 2 || other.ndim > 2 || other.dim(0) != dim(1)) {
+            throw NDArrayException.NonMatchingDimensionsException()
+        }
+
+        val secondDim = if (other.ndim == 1) 1 else other.dim(1)
+        val result = zeros(DefaultShape(dim(0), secondDim))
+        var sum: Int
+        for (i1 in 0 until dim(0)) {
+            for (i2 in 0 until secondDim) {
+                sum = 0
+                for (k in 0 until dim(1)) {
+                    sum += at(DefaultPoint(i1, k)) * other.at(
+                        if (other.ndim == 1)
+                            DefaultPoint(k) else DefaultPoint(k, i2)
+                    )
+                }
+                result.set(DefaultPoint(i1, i2), sum)
+            }
+        }
+        return result
+    }
+
+    override fun view(): NDArray {
+        return SharedNDArray.viewArray(this)
+    }
+
+}
+
+internal class SharedNDArray private constructor(private val ndArray: NDArray) : NDArray by ndArray {
+    companion object {
+        fun viewArray(ndArray: NDArray): NDArray {
+            return SharedNDArray(ndArray)
+        }
+    }
 }
 
 sealed class NDArrayException : Exception() {
-    /* TODO: реализовать требуемые исключения */
-    // IllegalPointCoordinateException
-    // IllegalPointDimensionException
+    class IllegalPointCoordinateException : NDArrayException()
+    class IllegalPointDimensionException : NDArrayException()
+    class NonMatchingDimensionsException : NDArrayException()
 }
