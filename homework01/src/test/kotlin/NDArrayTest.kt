@@ -98,4 +98,92 @@ internal class NDArrayTest {
         assertEquals(58, data.at(DefaultPoint(0, 1)))
         assertEquals(2, data.at(DefaultPoint(0, 2)))
     }
+
+    @Test
+    fun testAddDifferentDims() {
+        val data = DefaultNDArray.ones(DefaultShape(3, 3))
+        val data2 = DefaultNDArray.ones(DefaultShape(3))
+
+        data.add(data2)
+
+        for (i in 0..2) {
+            for (j in 0..2) {
+                assertEquals(2, data.at(DefaultPoint(i, j)))
+            }
+        }
+    }
+
+    @Test
+    fun testAddDifferentDimsExtraInMiddle() {
+        val data = DefaultNDArray.ones(DefaultShape(1, 2, 1))
+        val data2 = DefaultNDArray.ones(DefaultShape(1, 1))
+
+        data.add(data2)
+
+        assertEquals(2, data.at(DefaultPoint(0, 0, 0)))
+        assertEquals(2, data.at(DefaultPoint(0, 1, 0)))
+    }
+
+    @Test
+    fun testDot() {
+        val data = DefaultNDArray.ones(DefaultShape(2, 2))
+        val data2 = DefaultNDArray.ones(DefaultShape(2))
+
+        data.set(DefaultPoint(0, 0), 1)
+        data.set(DefaultPoint(0, 1), 2)
+        data.set(DefaultPoint(1, 0), 3)
+        data.set(DefaultPoint(1, 1), 4)
+        data2.set(DefaultPoint(0), 1)
+        data2.set(DefaultPoint(1), 2)
+
+        val result = data.dot(data2)
+
+        assertEquals(5, result.at(DefaultPoint(0, 0)))
+        assertEquals(11, result.at(DefaultPoint(1, 0)))
+    }
+
+    @Test
+    fun testDot2() {
+        val data = DefaultNDArray.ones(DefaultShape(2, 1))
+        val data2 = DefaultNDArray.ones(DefaultShape(3))
+
+        data.set(DefaultPoint(0, 0), 1)
+        data.set(DefaultPoint(1, 0), 2)
+        data2.set(DefaultPoint(0), 1)
+        data2.set(DefaultPoint(1), 2)
+        data2.set(DefaultPoint(2), 3)
+
+        val result = data.dot(data2)
+
+        assertEquals(1, result.at(DefaultPoint(0, 0)))
+        assertEquals(2, result.at(DefaultPoint(0, 1)))
+        assertEquals(3, result.at(DefaultPoint(0, 2)))
+        assertEquals(2, result.at(DefaultPoint(1, 0)))
+        assertEquals(4, result.at(DefaultPoint(1, 1)))
+        assertEquals(6, result.at(DefaultPoint(1, 2)))
+    }
+
+    @Test
+    fun testDotEqualDims() {
+        val data = DefaultNDArray.ones(DefaultShape(2, 2))
+        val data2 = DefaultNDArray.ones(DefaultShape(2, 2))
+
+        data.set(DefaultPoint(0, 0), 1)
+        data.set(DefaultPoint(0, 1), 2)
+        data.set(DefaultPoint(1, 0), 3)
+        data.set(DefaultPoint(1, 1), 4)
+
+        data2.set(DefaultPoint(0, 0), 1)
+        data2.set(DefaultPoint(0, 1), 2)
+        data2.set(DefaultPoint(1, 0), 3)
+        data2.set(DefaultPoint(1, 1), 4)
+
+        val result = data.dot(data2)
+
+        assertEquals(7, result.at(DefaultPoint(0, 0)))
+        assertEquals(10, result.at(DefaultPoint(0, 1)))
+        assertEquals(15, result.at(DefaultPoint(1, 0)))
+        assertEquals(22, result.at(DefaultPoint(1, 1)))
+
+    }
 }
