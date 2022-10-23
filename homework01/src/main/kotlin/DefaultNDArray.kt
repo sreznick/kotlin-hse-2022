@@ -255,7 +255,7 @@ class DefaultNDArray private constructor(private val shape: Shape,
 
 sealed class NDArrayException(reason: String = "") : Exception(reason) {
      class IllegalPointCoordinateException(val index: Int, val value: Int):
-         NDArrayException("Illegal point coordinate on position $index with value $value")
+         NDArrayException("Illegal point coordinate on position ${index + 1} with value $value")
      class IllegalPointDimensionException(val reason: String): NDArrayException(reason)
      class IllegalNDArrayDimensionsException(val reason: String): NDArrayException(reason)
 }
