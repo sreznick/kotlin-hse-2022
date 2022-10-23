@@ -1,5 +1,4 @@
-
-interface DimentionAware {
+interface DimensionAware {
     val ndim: Int
     fun dim(i: Int): Int
 }
