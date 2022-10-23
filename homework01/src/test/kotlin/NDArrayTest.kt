@@ -7,13 +7,13 @@ internal class NDArrayTest {
         val data = DefaultNDArray.zeros(DefaultShape(10))
 
         for (i in 0 until 10) {
-            assertEquals(0, data.at(DefaultPoint( i)))
+            assertEquals(0, data.at(DefaultPoint(i)))
         }
     }
 
     @Test
     fun testOnes() {
-        val data =DefaultNDArray.ones(DefaultShape(10))
+        val data = DefaultNDArray.ones(DefaultShape(10))
 
         for (i in 0 until 10) {
             assertEquals(1, data.at(DefaultPoint(i)))
@@ -22,7 +22,7 @@ internal class NDArrayTest {
 
     @Test
     fun testSet1D() {
-        val data =DefaultNDArray.ones(DefaultShape(10))
+        val data = DefaultNDArray.ones(DefaultShape(10))
         data.set(DefaultPoint(3), 34)
 
         for (i in 0 until 10) {
@@ -40,7 +40,7 @@ internal class NDArrayTest {
         data.set(DefaultPoint(3, 4), 34)
 
         for (i in 0 until 10) {
-            for (j in 0 until 3) {
+            for (j in 0 until 5) {
                 if (i == 3 && j == 4) {
                     assertEquals(34, data.at(DefaultPoint(i, j)))
                 } else {
@@ -56,11 +56,12 @@ internal class NDArrayTest {
         data.set(DefaultPoint(3, 4, 6), 34)
 
         for (i in 0 until 10) {
-            for (j in 0 until 3) {
+            for (j in 0 until 5) {
                 for (k in 0 until 8) {
                     if (i == 3 && j == 4 && k == 6) {
                         assertEquals(34, data.at(DefaultPoint(i, j, k)))
                     } else {
+                        println("$i $j $k")
                         assertEquals(1, data.at(DefaultPoint(i, j, k)))
                     }
                 }
