@@ -89,7 +89,6 @@ class DefaultNDArray private constructor(val data: IntArray, private val shape: 
         fun zeros(shape: Shape) : NDArray{
             return DefaultNDArray(IntArray(shape.size), shape)
         }
-
         fun ones(shape: Shape) : NDArray{
             return DefaultNDArray(IntArray(shape.size) {1}, shape)
         }
