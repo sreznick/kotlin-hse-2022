@@ -1,5 +1,4 @@
-
-interface Shape: DimentionAware, SizeAware
+interface Shape : DimensionAware, SizeAware
 
 /**
  * Реализация Point по умолчаению
@@ -14,10 +13,28 @@ interface Shape: DimentionAware, SizeAware
  *
  * Сама коллекция параметров недоступна, доступ - через методы интерфейса
  */
-class DefaultShape(private vararg val dimentions: Int): Shape {
+class DefaultShape(private vararg val dimensions: Int) : Shape {
+    override val ndim = dimensions.size
+    override fun dim(i: Int): Int = dimensions[i]
+    override val size: Int
+
+    init {
+        if (dimensions.isEmpty()) {
+            throw ShapeArgumentException.EmptyShapeException()
+        }
+        var size = 1
+        for (i in dimensions.indices) {
+            if (dimensions[i] <= 0) {
+                throw ShapeArgumentException.NonPositiveDimensionException(i, dimensions[i])
+            }
+            size *= dimensions[i]
+        }
+        this.size = size
+    }
 }
 
-sealed class ShapeArgumentException (reason: String = "") : IllegalArgumentException(reason) {
-    // EmptyShapeException
-    // NonPositiveDimensionException(val index: Int, val value: Int)
+sealed class ShapeArgumentException(reason: String = "") : IllegalArgumentException(reason) {
+    class EmptyShapeException : ShapeArgumentException("DefaultShape constructor must have some arguments")
+    class NonPositiveDimensionException(val index: Int, val value: Int) :
+        ShapeArgumentException("Non-positive argument found: dimensions[$index] = $value")
 }
