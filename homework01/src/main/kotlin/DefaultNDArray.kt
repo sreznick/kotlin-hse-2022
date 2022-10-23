@@ -130,11 +130,11 @@ class DefaultNDArray private constructor(private val shape: Shape,
 
     private fun pointValidation(point: Point) {
         if (point.ndim != this.ndim) {
-            throw NDArrayException.IllegalPointDimensionException()
+            throw NDArrayException.IllegalPointDimensionException("Expected ${this.ndim} but found ${point.ndim}")
         }
         for (i in 0 until this.ndim) {
             if (this.dim(i) <= point.dim(i) || point.dim(i) < 0) {
-                throw NDArrayException.IllegalPointCoordinateException()
+                throw NDArrayException.IllegalPointCoordinateException(i, point.dim(i))
             }
         }
     }
@@ -253,8 +253,9 @@ class DefaultNDArray private constructor(private val shape: Shape,
 
 }
 
-sealed class NDArrayException : Exception() {
-     class IllegalPointCoordinateException: NDArrayException()
-     class IllegalPointDimensionException: NDArrayException()
-     class IllegalNDArrayDimensionsException(val errorMessage: String): NDArrayException()
+sealed class NDArrayException(reason: String = "") : Exception(reason) {
+     class IllegalPointCoordinateException(val index: Int, val value: Int):
+         NDArrayException("Illegal point coordinate on position $index with value $value")
+     class IllegalPointDimensionException(val reason: String): NDArrayException(reason)
+     class IllegalNDArrayDimensionsException(val reason: String): NDArrayException(reason)
 }
