@@ -1,5 +1,4 @@
-
-interface NDArray: SizeAware, DimentionAware {
+interface NDArray : SizeAware, DimensionAware {
     /*
      * Получаем значение по индексу point
      *
@@ -83,11 +82,160 @@ interface NDArray: SizeAware, DimentionAware {
  *
  * Инициализация - через factory-методы ones(shape: Shape), zeros(shape: Shape) и метод copy
  */
-class DefaultNDArray: NDArray {
+class DefaultNDArray private constructor(shape: Shape, initValue: Int) : NDArray {
+    override val size = shape.size
+    override val ndim = shape.ndim
+    private val dimensions = IntArray(ndim) { i -> shape.dim(i) }
+    private val data = IntArray(size) { initValue }
+
+    override fun dim(i: Int): Int = dimensions[i]
+
+    companion object {
+        fun zeros(shape: Shape): NDArray = DefaultNDArray(shape, 0)
+        fun ones(shape: Shape): NDArray = DefaultNDArray(shape, 1)
+    }
+
+    private constructor (other: DefaultNDArray) : this(DefaultShape(*IntArray(other.ndim) { i -> other.dim(i) }), 0) {
+        this.add(other)
+    }
+
+    override fun at(point: Point): Int {
+        return data[pointToIndex(point)]
+    }
+
+    override fun set(point: Point, value: Int) {
+        data[pointToIndex(point)] = value
+    }
+
+    override fun copy(): NDArray {
+        return DefaultNDArray(this)
+    }
+
+    override fun view(): NDArray {
+        return NDArrayView(this)
+    }
+
+    override fun add(other: NDArray) {
+        when (ndim) {
+            other.ndim -> {
+                for (i in dimensions.indices) {
+                    if (dim(i) != other.dim(i)) {
+                        throw NDArrayException.NDArrayDimensionMismatchException()
+                    }
+                }
+                for (i in 0 until size) {
+                    data[i] += (other as DefaultNDArray).data[i]
+                }
+            }
+            other.ndim + 1 -> {
+                var missingDimension = -1
+                var missingWas = false
+                var thisIndex = 0
+                var otherIndex = 0
+                while (otherIndex < other.ndim) {
+                    if (dim(thisIndex) != other.dim(otherIndex)) {
+                        if (missingWas) {
+                            throw NDArrayException.NDArrayDimensionMismatchException()
+                        }
+                        missingDimension = thisIndex
+                        missingWas = true
+                        thisIndex++
+                    } else {
+                        thisIndex++
+                        otherIndex++
+                    }
+                }
+                if (missingDimension == -1) {
+                    missingDimension = ndim - 1
+                }
+                val layerSize = size / dim(missingDimension)
+                for (d in 0 until dim(missingDimension)) {
+                    for (i in 0 until layerSize) {
+                        data[d * layerSize + i] += (other as DefaultNDArray).data[i]
+                    }
+                }
+            }
+            else -> throw NDArrayException.NDArrayDimensionMismatchException()
+        }
+    }
+
+    override fun dot(other: NDArray): NDArray {
+        if (ndim == 2 && other.ndim == 2 && dim(1) == other.dim(0)) {
+            val ndArray = zeros(DefaultShape(dim(0), other.dim(1))) as DefaultNDArray
+            for (i in 0 until dim(0)) {
+                for (j in 0 until other.dim(1)) {
+                    var value = 0
+                    for (k in 0 until dim(1)) {
+                        value += data[i * dim(1) + k] * (other as DefaultNDArray).data[k * other.dim(1) + j]
+                    }
+                    ndArray.data[i * other.dim(1) + j] = value
+                }
+            }
+            return ndArray
+        } else if (ndim == 2 && other.ndim == 1 && dim(1) == other.dim(0)) {
+            val ndArray = zeros(DefaultShape(dim(0), 1)) as DefaultNDArray
+            for (i in 0 until dim(0)) {
+                var value = 0
+                for (k in 0 until dim(1)) {
+                    value += data[i * dim(1) + k] * (other as DefaultNDArray).data[k]
+                }
+                ndArray.data[i] = value
+            }
+            return ndArray
+        } else {
+            throw NDArrayException.NDArrayDimensionMismatchException()
+        }
+    }
+
+    private fun pointToIndex(point: Point): Int {
+        if (ndim != point.ndim) {
+            throw NDArrayException.IllegalPointDimensionException()
+        }
+        var layerSize = size
+        var index = 0
+        for (i in ndim - 1 downTo 0) {
+            layerSize /= dim(i)
+            if (point.dim(i) >= dim(i)) {
+                throw NDArrayException.IllegalPointCoordinateException()
+            }
+            index += layerSize * point.dim(i)
+        }
+        return index
+    }
+}
+
+internal class NDArrayView(private val ndArray: NDArray) : NDArray {
+    override val size = ndArray.size
+    override val ndim = ndArray.ndim
+    override fun dim(i: Int): Int = ndArray.dim(i)
+
+    override fun at(point: Point): Int {
+        return ndArray.at(point)
+    }
+
+    override fun set(point: Point, value: Int) {
+        ndArray.set(point, value)
+    }
+
+    override fun copy(): NDArray {
+        return NDArrayView(ndArray)
+    }
+
+    override fun view(): NDArray {
+        return NDArrayView(this)
+    }
+
+    override fun add(other: NDArray) {
+        ndArray.add(other)
+    }
+
+    override fun dot(other: NDArray): NDArray {
+        return ndArray.dot(other)
+    }
 }
 
 sealed class NDArrayException : Exception() {
-    /* TODO: реализовать требуемые исключения */
-    // IllegalPointCoordinateException
-    // IllegalPointDimensionException
+    class IllegalPointCoordinateException : NDArrayException()
+    class IllegalPointDimensionException : NDArrayException()
+    class NDArrayDimensionMismatchException : NDArrayException()
 }
