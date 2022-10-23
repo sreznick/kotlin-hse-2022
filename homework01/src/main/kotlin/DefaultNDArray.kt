@@ -1,5 +1,4 @@
-
-interface NDArray: SizeAware, DimentionAware {
+interface NDArray : SizeAware, DimensionAware {
     /*
      * Получаем значение по индексу point
      *
@@ -83,11 +82,87 @@ interface NDArray: SizeAware, DimentionAware {
  *
  * Инициализация - через factory-методы ones(shape: Shape), zeros(shape: Shape) и метод copy
  */
-class DefaultNDArray: NDArray {
+class DefaultNDArray private constructor(
+    override val size: Int,
+    override val ndim: Int,
+    private val shape: Shape,
+    private val array: IntArray
+) :
+    NDArray {
+
+    private fun getIndexByPoint(point: Point): Int {
+        if (point.ndim != ndim) {
+            throw NDArrayException.IllegalPointDimensionException(point)
+        }
+        var index = 0
+        for (i in 0 until point.ndim) {
+            if (point.dim(i) >= shape.dim(i)) {
+                throw NDArrayException.IllegalPointCoordinateException(point)
+            }
+            var k = 1
+            for (j in i + 1 until point.ndim)
+                k *= shape.dim(j)
+            index += k * point.dim(i)
+        }
+        return index
+    }
+
+    override fun at(point: Point): Int {
+        return array[getIndexByPoint(point)]
+    }
+
+    override fun set(point: Point, value: Int) {
+        array[getIndexByPoint(point)] = value
+    }
+
+    override fun copy(): NDArray {
+        return DefaultNDArray(size, ndim, shape, array.copyOf())
+    }
+
+    override fun view(): NDArray {
+        return DefaultNDArray(size, ndim, shape, array)
+    }
+
+    override fun add(other: NDArray) {
+        if (other.size == size) {
+            for (i in 0 until shape.dim(0)) {
+                for (j in 0 until shape.dim(1)) {
+                    array[getIndexByPoint(DefaultPoint(i, j))] += other.at(DefaultPoint(i, j))
+                }
+            }
+        }
+    }
+
+    override fun dot(other: NDArray): NDArray {
+        val newSize = shape.dim(0) * other.dim(1)
+        val newArray = IntArray(newSize)
+        val newShape = DefaultShape(shape.dim(0), other.dim(1))
+        for (i in 0 until shape.dim(0)) {
+            for (j in 0 until other.dim(1)) {
+                for (k in 0 until other.dim(0)) {
+                    newArray[getIndexByPoint(DefaultPoint(i, j))] +=
+                        at(DefaultPoint(i, k)) * other.at(DefaultPoint(k, j))
+                }
+            }
+        }
+        return DefaultNDArray(newSize, shape.dim(0), newShape, newArray)
+    }
+
+    override fun dim(i: Int): Int = shape.dim(i)
+
+    companion object {
+        fun zeros(shape: Shape): DefaultNDArray {
+            return DefaultNDArray(shape.size, shape.ndim, shape, IntArray(shape.size))
+        }
+
+        fun ones(shape: Shape): DefaultNDArray {
+            return DefaultNDArray(shape.size, shape.ndim, shape, IntArray(shape.size) { 1 })
+        }
+    }
 }
 
-sealed class NDArrayException : Exception() {
-    /* TODO: реализовать требуемые исключения */
-    // IllegalPointCoordinateException
-    // IllegalPointDimensionException
+sealed class NDArrayException(reason: String = "") : Exception(reason) {
+    class IllegalPointDimensionException(point: Point) : NDArrayException("Wrong point $point dimensions")
+
+    class IllegalPointCoordinateException(point: Point) : NDArrayException("Wrong point $point coordinate")
 }
