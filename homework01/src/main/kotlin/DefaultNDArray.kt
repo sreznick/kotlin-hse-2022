@@ -83,11 +83,74 @@ interface NDArray: SizeAware, DimentionAware {
  *
  * Инициализация - через factory-методы ones(shape: Shape), zeros(shape: Shape) и метод copy
  */
-class DefaultNDArray: NDArray {
+class DefaultNDArray private constructor(private val shape: DefaultShape, private val values: IntArray): NDArray {
+
+    companion object {
+        fun zeros(shape: DefaultShape): DefaultNDArray = DefaultNDArray(shape, IntArray(shape.size){ 0 })
+        fun ones(shape: DefaultShape): DefaultNDArray = DefaultNDArray(shape, IntArray(shape.size){ 1 })
+    }
+    override fun at(point: Point): Int = values[pointToLinearIndex(point)]
+
+    override fun set(point: Point, value: Int) {
+        values[pointToLinearIndex(point)] = value
+    }
+
+    override fun copy(): NDArray = DefaultNDArray(shape, values.clone())
+
+    override fun view(): NDArray = DefaultNDArray(shape, values)
+
+    override fun add(other: NDArray) {
+        if (other.ndim != ndim && (other.ndim + 1) != ndim) {
+            throw NDArrayException.IllegalNDArrayDimensionException()
+        }
+
+        var possibleNumOfIncorrectIndexes = if (other.ndim == ndim) 0 else 1
+        var offset = 0
+        var lastSameIndex: Int = 0
+        for (i in 0 until ndim) {
+            if (dim(i) != other.dim(i - offset)) {
+                if (possibleNumOfIncorrectIndexes < 0) {
+                    throw NDArrayException.IllegalNDArrayDimensionException()
+                }
+
+                possibleNumOfIncorrectIndexes--
+                lastSameIndex = i - 1
+                offset = 1
+            }
+        }
+
+        TODO("Not yet implemented")
+    }
+
+    override fun dot(other: NDArray): NDArray {
+        TODO("Not yet implemented")
+    }
+
+    override val size: Int = shape.size
+    override val ndim: Int = shape.ndim
+
+    override fun dim(i: Int): Int = shape.dim(i)
+
+    private fun pointToLinearIndex(point: Point): Int {
+        if (point.ndim != shape.ndim) {
+            throw NDArrayException.IllegalPointDimensionException()
+        }
+
+        var index = point.dim(0)
+        for (i in 1 until point.ndim) {
+            index = dim(i) * index + point.dim(i)
+        }
+
+        if (index >= size) {
+            throw NDArrayException.IllegalPointCoordinateException()
+        }
+
+        return index
+    }
 }
 
 sealed class NDArrayException : Exception() {
-    /* TODO: реализовать требуемые исключения */
-    // IllegalPointCoordinateException
-    // IllegalPointDimensionException
+    class IllegalPointCoordinateException: NDArrayException()
+    class IllegalPointDimensionException: NDArrayException()
+    class IllegalNDArrayDimensionException: NDArrayException()
 }
