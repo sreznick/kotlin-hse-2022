@@ -107,6 +107,18 @@ class DefaultNDArray private constructor(
         return index
     }
 
+    private fun getPointByIndex(index: Int): Point {
+        var curIndex = index
+        var curDim = 1
+        val coords = IntArray(ndim)
+        for (i in ndim - 1 downTo 0) {
+            curDim *= dim(i)
+            coords[i] = curIndex % curDim
+            curIndex /= curDim
+        }
+        return DefaultPoint(*coords)
+    }
+
     override fun at(point: Point): Int {
         return array[getIndexByPoint(point)]
     }
@@ -124,11 +136,9 @@ class DefaultNDArray private constructor(
     }
 
     override fun add(other: NDArray) {
-        if (other.size == size) {
-            for (i in 0 until shape.dim(0)) {
-                for (j in 0 until shape.dim(1)) {
-                    array[getIndexByPoint(DefaultPoint(i, j))] += other.at(DefaultPoint(i, j))
-                }
+        if (other.ndim == ndim) {
+            for (i in 0 until size) {
+                array[i] += other.at(getPointByIndex(i))
             }
         }
     }
