@@ -8,6 +8,7 @@
 /dataSources.local.xml
 homework01/build/*
 homework01/.idea/*
-homework01/gradle/*
+homework01/.idea
+homework01/.gradle/*
 .idea/*
 

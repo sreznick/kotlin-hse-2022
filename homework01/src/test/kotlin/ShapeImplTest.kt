@@ -1,5 +1,5 @@
-import org.junit.jupiter.api.Assertions.*
-import org.junit.jupiter.api.function.Executable;
+import org.junit.jupiter.api.Assertions.assertEquals
+import org.junit.jupiter.api.Assertions.assertThrows
 import kotlin.test.Test
 
 internal class ShapeImplTest {
