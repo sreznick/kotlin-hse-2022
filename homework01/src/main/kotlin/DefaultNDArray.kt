@@ -83,11 +83,98 @@ interface NDArray: SizeAware, DimentionAware {
  *
  * Инициализация - через factory-методы ones(shape: Shape), zeros(shape: Shape) и метод copy
  */
-class DefaultNDArray: NDArray {
+class DefaultNDArray private constructor(
+    private val shape: Shape,
+    private val value: Int = 0,
+    private val values : IntArray = IntArray(shape.size).apply {fill(value)}) : NDArray {
+
+    companion object {
+        fun ones(shape : Shape) : DefaultNDArray {
+            return DefaultNDArray(shape, 1)
+        }
+        fun zeros(shape : Shape) : DefaultNDArray {
+            return DefaultNDArray(shape, 0)
+        }
+    }
+
+    private fun getIndex(point: Point): Int {
+        var index = 0
+        var part = 1
+        for(i in 0 until point.ndim) {
+            val j = point.ndim - 1 - i
+            if (point.dim(j) > shape.dim(j)) {
+                throw NDArrayException.IllegalPointCoordinateException()
+            }
+            index += part * point.dim(j)
+            part *= shape.dim(j)
+        }
+        return index
+    }
+
+    override fun at(point: Point): Int {
+        if (shape.ndim != point.ndim) {
+            throw NDArrayException.IllegalPointDimensionException()
+        }
+        return values[getIndex(point)]
+    }
+
+    override fun set(point: Point, value: Int) {
+        if (shape.ndim != point.ndim) {
+            throw NDArrayException.IllegalPointDimensionException()
+        }
+        values[getIndex(point)] = value
+    }
+
+    override fun copy(): NDArray = DefaultNDArray(shape, value, values.copyOf())
+
+    override fun view(): NDArray = DefaultNDArray(shape, value, values)
+
+    override fun add(other: NDArray) {
+        if(other.ndim == ndim) {
+            chechDemantions(other)
+            if (other is DefaultNDArray) {
+                for (i in 0 until values.size) {
+                    values[i] += other.values[i]
+                }
+            } else {
+                throw NDArrayException.IllegalNDArrayClassException()
+            }
+        } else if (other.ndim == ndim - 1) {
+            if (other is DefaultNDArray) {
+                for (i in 0 until values.size) {
+                    val j = i % (values.size / shape.dim(shape.ndim - 1))
+                    values[i] += other.values[j]
+                }
+            } else {
+                throw NDArrayException.IllegalNDArrayClassException()
+            }
+        } else {
+            throw NDArrayException.IllegalPointDimensionException()
+        }
+    }
+
+    private fun chechDemantions(other: NDArray) {
+        for (i in 0 until other.ndim) {
+            if (dim(i) != other.dim(i)) {
+                throw NDArrayException.IllegalPointDimensionException()
+            }
+        }
+    }
+
+    override fun dot(other: NDArray): NDArray {
+        TODO("Not yet implemented")
+    }
+
+    override val size: Int
+        get() = shape.size
+    override val ndim: Int
+        get() = shape.ndim
+
+    override fun dim(i: Int): Int = shape.dim(i)
 }
 
 sealed class NDArrayException : Exception() {
-    /* TODO: реализовать требуемые исключения */
-    // IllegalPointCoordinateException
-    // IllegalPointDimensionException
+    class IllegalPointCoordinateException() : NDArrayException()
+    class IllegalPointDimensionException() : NDArrayException()
+    class IllegalNDArrayClassException() : NDArrayException()
 }
