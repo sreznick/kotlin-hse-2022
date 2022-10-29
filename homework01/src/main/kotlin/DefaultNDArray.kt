@@ -106,15 +106,15 @@ class DefaultNDArray private constructor(val shape: DefaultShape, private val va
 
         var possibleNumOfIncorrectIndexes = if (other.ndim == ndim) 0 else 1
         var offset = 0
-        var lastSameIndex: Int = 0
+        var diffIndex: Int = ndim - 1
         for (i in 0 until ndim) {
-            if (dim(i) != other.dim(i - offset)) {
+            if (i < other.ndim && dim(i) != other.dim(i - offset)) {
                 if (possibleNumOfIncorrectIndexes < 0) {
                     throw NDArrayException.IllegalNDArrayDimensionException()
                 }
 
                 possibleNumOfIncorrectIndexes--
-                lastSameIndex = i - 1
+                diffIndex = i
                 offset = 1
             }
         }
@@ -124,12 +124,30 @@ class DefaultNDArray private constructor(val shape: DefaultShape, private val va
                 values[i] += other.at(linearIndexToPoint(i, shape))
             }
         } else {
-            TODO("Not yet implemented")
+            for (i in 0 until size) {
+                val myPoint = linearIndexToPoint(i, shape)
+                val otherPoint = reducePointDim(myPoint, diffIndex)
+                val newValue = at(myPoint) + other.at(otherPoint)
+                set(myPoint, newValue)
+            }
         }
     }
 
     override fun dot(other: NDArray): NDArray {
-        TODO("Not yet implemented")
+        if (ndim != 2 || other.ndim > 2 || dim(1) != other.dim(0)) {
+            println(ndim)
+            println(other.ndim)
+            println(dim(1))
+            println(other.dim(0))
+            throw NDArrayException.IllegalNDArrayDimensionException()
+        }
+
+
+        return when (other.ndim) {
+            2 -> dotToMat(other)
+            1 -> dotToVector(other)
+            else -> throw NDArrayException.IllegalNDArrayDimensionException()
+        }
     }
 
     override val size: Int = shape.size
@@ -162,6 +180,60 @@ class DefaultNDArray private constructor(val shape: DefaultShape, private val va
             index /= dim(i)
         }
         return DefaultPoint(*coordinates)
+    }
+
+    private fun reducePointDim(point: Point, dimNum: Int): Point {
+        val coordinates = IntArray(point.ndim - 1){0}
+        var offset = 0
+        for (i in 0 until point.ndim ) {
+            if (i == dimNum) {
+                offset = -1
+                continue
+            }
+            coordinates[i + offset] = point.dim(i)
+        }
+        return DefaultPoint(*coordinates)
+    }
+
+    private fun dotToMat(mat: NDArray): NDArray {
+        val resMat = zeros(DefaultShape(dim(0), mat.dim(1)))
+        for (i in 0 until dim(0)) {
+            for (j in 0 until dim(1)) {
+                for (k in 0 until mat.dim(1)) {
+                    val value = resMat.at(DefaultPoint(i, k)) + at(DefaultPoint(i, j)) * mat.at(DefaultPoint(j, k))
+                    resMat.set(DefaultPoint(i, k), value)
+                }
+            }
+        }
+        return resMat
+    }
+
+    private fun dotToVector(vector: NDArray): NDArray {
+        val resVector = zeros(DefaultShape(dim(0)))
+        for (i in 0 until dim(0)) {
+            for (j in 0 until dim(1)) {
+                val value = resVector.at(DefaultPoint(i)) + at(DefaultPoint(i, j)) * vector.at(DefaultPoint(j))
+                resVector.set(DefaultPoint(i), value)
+            }
+        }
+        return resVector
+    }
+
+    override fun toString(): String {
+        return when (ndim) {
+            2 -> array2DToString(this)
+            else -> {values.joinToString()}
+        }
+    }
+
+    private fun array2DToString(data: DefaultNDArray): String = buildString {
+        for (i in 0 until dim(0)) {
+            for (j in 0 until dim(1)) {
+                val value = data.at(DefaultPoint(i, j))
+                append("$value ")
+            }
+            append("\n")
+        }
     }
 }
 

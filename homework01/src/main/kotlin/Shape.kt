@@ -34,6 +34,11 @@ class DefaultShape(private vararg val dimentions: Int): Shape {
         }
         size = countMulti
     }
+
+    override fun toString(): String = buildString {
+        append("Shape:")
+        dimentions.map { append(" $it") }
+    }
 }
 
 sealed class ShapeArgumentException (reason: String = "") : IllegalArgumentException(reason) {
