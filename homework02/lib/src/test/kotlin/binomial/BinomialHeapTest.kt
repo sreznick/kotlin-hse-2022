@@ -200,4 +200,17 @@ internal class BinomialHeapTest {
         assertEquals(987654321.0, heapSmall.top())
         assertEquals(987654321.0, heapSmall.drop().top())
     }
+
+    @Test
+    fun removeSmall() {
+        val n = 6
+        val numbers = (n downTo 1)
+        val heap = numbers.fold(BinomialHeap.single(n + 1)) { acc, i -> acc + i }
+        val result = (1..n)
+
+        result.fold(heap) { h, i ->
+            assertEquals(i, h.top())
+            h.drop()
+        }
+    }
 }
