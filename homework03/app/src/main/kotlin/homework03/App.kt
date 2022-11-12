@@ -3,13 +3,124 @@
  */
 package homework03
 
+import CsvSerializer
+import com.fasterxml.jackson.databind.DeserializationFeature
+import com.fasterxml.jackson.databind.ObjectMapper
+import com.fasterxml.jackson.module.kotlin.jacksonObjectMapper
+import com.soywiz.korio.async.async
+import com.soywiz.korio.async.launch
+import com.soywiz.korio.file.std.toVfs
+import com.soywiz.korio.net.http.Http
+import com.soywiz.korio.net.http.HttpClient
+import com.sun.jdi.request.InvalidRequestStateException
+import homework03.model.CommentsSnapshot
+import homework03.model.RedditComment
+import homework03.model.TopicSnapshot
+import homework03.model.json.*
+import kotlinx.coroutines.*
+import java.io.File
+
+
 class App {
-    val greeting: String
-        get() {
-            return "Hello World!"
+
+    private val SUBJECTS_CSV = "subjects.csv"
+
+    private val COMMENTS_CSV = "comments.csv"
+
+    private val DEFAULT_HEADERS = Http.Headers(
+        "Accept" to "application/json", "Accept-Encoding" to "deflate"
+    )
+
+    private val objectMapper: ObjectMapper =
+        jacksonObjectMapper().configure(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, false)
+            .configure(DeserializationFeature.ACCEPT_EMPTY_STRING_AS_NULL_OBJECT, true)
+
+    suspend fun processTopicsWithComments(topicsName: List<String>) = runBlocking {
+        val comments = ArrayList<RedditComment>()
+        val topics = ArrayList<RedditThread>()
+        topicsName.map {
+            launch {
+                processTopicWithComments(it, topics, comments)
+            }
+        }.joinAll()
+        writeTopicsInFiles(topics, comments)
+    }
+
+    private suspend fun writeTopicsInFiles(topics: List<RedditThread>, comments: List<RedditComment>) {
+        File(SUBJECTS_CSV).toVfs().writeString(CsvSerializer.csvSerialize(topics, RedditThread::class))
+        File(COMMENTS_CSV).toVfs().writeString(CsvSerializer.csvSerialize(comments, RedditComment::class))
+    }
+
+    private suspend fun processTopicWithComments(
+        topicName: String, topics: MutableList<RedditThread>, comments: MutableList<RedditComment>
+    ) = coroutineScope {
+        try {
+            val topicSnapshot = getTopic(topicName)
+            topics.addAll(topicSnapshot.threads)
+            topicSnapshot.threads.map {
+                async(Dispatchers.Default) { getComments(it.permalink).comments }
+            }.awaitAll().forEach(comments::addAll)
+        } catch (e: InvalidRequestStateException) {
+            println("Can't process topic $topicName")
         }
+
+    }
+
+    private suspend fun processRequest(url: String): String = withContext(Dispatchers.IO) {
+        val ret = HttpClient().request(
+            Http.Method.GET, url, DEFAULT_HEADERS, null, HttpClient.RequestConfig(followRedirects = false)
+        )
+        if (ret.status != 200) {
+            throw InvalidRequestStateException("Request on $url had status ${ret.status}")
+        }
+        return@withContext ret.readAllString()
+    }
+
+    private suspend fun getTopic(name: String): TopicSnapshot {
+        val aboutJob = async(Dispatchers.Default) {
+            val response = processRequest("https://www.reddit.com/r/$name/about.json")
+            return@async objectMapper.readValue(response, TopicAboutJsonModel::class.java).data
+        }
+        val threadsJob = async(Dispatchers.Default) {
+            val response = processRequest("https://www.reddit.com/r/$name/.json")
+            return@async objectMapper.readValue(response, CommentsJsonModel::class.java).data.children
+                .map { (it as CommentInfoChildKind3).data }
+        }
+        return TopicSnapshot(aboutJob.await(), threadsJob.await())
+    }
+
+    private fun parseComments(
+        node: List<CommentInfoChildKind>, list: MutableList<RedditComment>, topicId: String, replyTo: String?
+    ) {
+        node
+            .filter { it.kind == "t1" }
+            .map { it as CommentInfoChildKind1 }
+            .map { it.data }
+            .forEach {
+                list.add(RedditComment.fromJson(it, topicId, replyTo))
+                if (it.replies != null) parseComments(it.replies.data.children, list, topicId, it.id)
+            }
+    }
+
+
+    private suspend fun getComments(link: String): CommentsSnapshot {
+        val list = ArrayList<RedditComment>()
+        return try {
+            val response = processRequest("https://www.reddit.com$link.json")
+            val comments = objectMapper.readerForListOf(CommentsJsonModel::class.java)
+                .readValue<List<CommentsJsonModel>>(response)
+            val topicId = (comments.first().data.children.first() as CommentInfoChildKind3).data.id
+            comments.drop(1).forEach {
+                parseComments(it.data.children, list, topicId, null)
+            }
+            CommentsSnapshot(list)
+        } catch (e: InvalidRequestStateException) {
+            println("Can't process comments from $link")
+            CommentsSnapshot(emptyList())
+        }
+    }
 }
 
-fun main() {
-    println(App().greeting)
+suspend fun main(args: Array<String>) {
+    App().processTopicsWithComments(args.toList())
 }
