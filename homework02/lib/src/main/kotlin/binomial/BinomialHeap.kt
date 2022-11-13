@@ -69,6 +69,7 @@ class BinomialHeap<T : Comparable<T>> private constructor(private val trees: FLi
      * 
      * Требуемая сложность - O(log(n))
      */
+
     operator fun plus(elem: T): BinomialHeap<T> = plus(single(elem))
 
     /*
