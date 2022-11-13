@@ -57,10 +57,6 @@ sealed class FList<T> : Iterable<T> {
      * Также для борьбы с бойлерплейтом были введены функция и свойство nil в компаньоне
      */
     data class Nil<T>(private val dummy: Int = 0) : FList<T>() {
-        /** DEBUG */
-        override fun toString(): String {
-            return ""
-        }
 
         override fun iterator(): Iterator<T> {
             class FListNilIterator : Iterator<T> {
@@ -81,10 +77,6 @@ sealed class FList<T> : Iterable<T> {
     }
 
     data class Cons<T>(val head: T, val tail: FList<T>) : FList<T>() {
-        /** DEBUG */
-        override fun toString(): String {
-            return head.toString() + " " + tail.toString()
-        }
 
         override val size: Int
             get() = 1 + tail.size

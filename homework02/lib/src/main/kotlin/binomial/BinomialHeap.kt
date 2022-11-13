@@ -24,15 +24,9 @@ package binomial
  * drop - удаление минимального элемента
  */
 class BinomialHeap<T : Comparable<T>> private constructor(private val trees: FList<BinomialTree<T>?>) :
-// Наверно, предполагается что у нас на месте нулей в записи двоичного числа, соответствующего куче стоит null,
-//  а на месте единиц - соответствующие деревья, null не может быть последним элементом
     SelfMergeable<BinomialHeap<T>> {
     companion object {
         fun <T : Comparable<T>> single(value: T): BinomialHeap<T> = BinomialHeap(flistOf(BinomialTree.single(value)))
-    }
-
-    override fun toString(): String {
-        return trees.toString()
     }
 
     /*
@@ -43,8 +37,6 @@ class BinomialHeap<T : Comparable<T>> private constructor(private val trees: FLi
     override fun plus(other: BinomialHeap<T>): BinomialHeap<T> {
         val it1 = this.trees.iterator()
         val it2 = other.trees.iterator()
-        // Если два дерева одного порядка, то просто мерджим их как деревья
-        // Иначе - Cons списка с деревом меньшего порядка и всего остального
 
         fun nullableTreeSum(
             tree1: BinomialTree<T>?,

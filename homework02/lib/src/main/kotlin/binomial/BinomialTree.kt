@@ -35,16 +35,11 @@ class BinomialTree<T: Comparable<T>> private constructor(val value: T, val child
     override fun plus(other: BinomialTree<T>): BinomialTree<T> {
         if (other.order != this.order) throw  IllegalArgumentException()
 
-        // Корень нового дерева - минимальный из двух корней данных деревьев
         return if (this.value < other.value) BinomialTree(value, FList.Cons(other, children))
         else BinomialTree(other.value, FList.Cons(this, other.children))
     }
 
     companion object {
         fun <T: Comparable<T>> single(value: T): BinomialTree<T> =  BinomialTree(value, FList.nil())
-    }
-
-    override fun toString(): String {
-        return "($value $children)"
     }
 }
