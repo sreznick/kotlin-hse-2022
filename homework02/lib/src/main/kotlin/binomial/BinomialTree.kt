@@ -1,5 +1,8 @@
 package binomial
 
+import java.lang.IllegalArgumentException
+import kotlin.math.max
+
 interface SelfMergeable<T> {
     operator fun plus(other: T): T
 }
@@ -24,7 +27,7 @@ interface SelfMergeable<T> {
 
 class BinomialTree<T: Comparable<T>> private constructor(val value: T, val children: FList<BinomialTree<T>>): SelfMergeable<BinomialTree<T>> {
     // порядок дерева
-    val order: Int = TODO()
+    val order: Int = if (children.isEmpty) 0 else children.fold(0) { acc: Int, current: BinomialTree<T> -> max(acc, current.order)} + 1
 
     /*
      * слияние деревьев
@@ -33,10 +36,17 @@ class BinomialTree<T: Comparable<T>> private constructor(val value: T, val child
      * Требуемая сложность - O(1)
      */
     override fun plus(other: BinomialTree<T>): BinomialTree<T> {
-        TODO()
+        if (other.order != order) {
+            throw IllegalArgumentException("Trees has orders: ${other.order} and $order, which aren't compatible")
+        }
+        return if (value < other.value) {
+            BinomialTree(value, FList.Cons(other, children))
+        } else {
+            BinomialTree(other.value, FList.Cons(this, other.children))
+        }
     }
 
     companion object {
-        fun <T: Comparable<T>> single(value: T): BinomialTree<T> = TODO()
+        fun <T: Comparable<T>> single(value: T): BinomialTree<T> = BinomialTree(value, FList.nil())
     }
 }
