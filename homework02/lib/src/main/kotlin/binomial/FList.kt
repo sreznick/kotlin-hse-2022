@@ -56,9 +56,51 @@ sealed class FList<T>: Iterable<T> {
      * Также для борьбы с бойлерплейтом были введены функция и свойство nil в компаньоне
      */
     data class Nil<T>(private val dummy: Int=0) : FList<T>() {
+        override fun iterator(): Iterator<T> {
+            TODO("Not yet implemented")
+        }
+
+        override val size: Int
+            get() = 0
+        override val isEmpty: Boolean
+            get() = true
+
+        override fun <U> map(f: (T) -> U): FList<U> {
+            TODO("Not yet implemented")
+        }
+
+        override fun filter(f: (T) -> Boolean): FList<T> {
+            TODO("Not yet implemented")
+        }
+
+        override fun <U> fold(base: U, f: (U, T) -> U): U {
+            TODO("Not yet implemented")
+        }
+
     }
 
     data class Cons<T>(val head: T, val tail: FList<T>) : FList<T>() {
+        override fun iterator(): Iterator<T> {
+            TODO("Not yet implemented")
+        }
+
+        override val size: Int
+            get() = 1 + tail.size
+        override val isEmpty: Boolean
+            get() = false
+
+        override fun <U> map(f: (T) -> U): FList<U> {
+            TODO("Not yet implemented")
+        }
+
+        override fun filter(f: (T) -> Boolean): FList<T> {
+            TODO("Not yet implemented")
+        }
+
+        override fun <U> fold(base: U, f: (U, T) -> U): U {
+            TODO("Not yet implemented")
+        }
+
     }
 
     companion object {
