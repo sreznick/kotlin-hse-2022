@@ -29,26 +29,7 @@ class BinomialHeap<T : Comparable<T>> private constructor(private val trees: FLi
         fun <T : Comparable<T>> single(value: T): BinomialHeap<T> =
             BinomialHeap(FList.Cons(BinomialTree.single(value), FList.nil()))
     }
-
-
-    private fun checkHelper(cur: Int, list: FList<BinomialTree<T>>): Boolean {
-        if (list is FList.Nil) {
-            return true
-        }
-        val nl = list as FList.Cons
-        assert(cur < nl.head.order)
-        return checkHelper(nl.head.order, nl.tail)
-    }
-
-    fun check() {
-        if (!checkHelper(-1, trees)) {
-            throw UnknownError(" Shouldn't be possible ")
-        }
-    }
-
-
-    /* Инвариант: в списке детей кучи деревья расположены по возрастанию размера (т.е. next().order > order)
-        Однако в самих деревьях наоборот
+    /*
      * слияние куч
      *
      * Требуемая сложность - O(log(n))
