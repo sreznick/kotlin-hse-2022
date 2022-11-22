@@ -192,10 +192,10 @@ internal class MyNDArrayTest {
         b.set(DefaultPoint(2), 90)
         b.set(DefaultPoint(3), -75)
         val c = a.dot(b)
-        assertEquals(c.at(DefaultPoint(0, 0)), 3913)
-        assertEquals(c.at(DefaultPoint(1, 0)), -1429)
-        assertEquals(c.at(DefaultPoint(2, 0)), 6667)
-        assertEquals(c.at(DefaultPoint(3, 0)), 0)
+        assertEquals(c.at(DefaultPoint(0)), 3913)
+        assertEquals(c.at(DefaultPoint(1)), -1429)
+        assertEquals(c.at(DefaultPoint(2)), 6667)
+        assertEquals(c.at(DefaultPoint(3)), 0)
     }
 
     @Test
