@@ -153,7 +153,7 @@ class DefaultNDArray private constructor(private val array: IntArray, private va
         val n = dim(0)
         val l = dim(1)
         val m = when (other.ndim) { 1 -> 1 else -> other.dim(1) }
-        val newDims = intArrayOf(m * n, m, 1)
+        val newDims = if (other.ndim == 1) intArrayOf(n, 1) else intArrayOf(m * n, m, 1)
         val newArray = IntArray(newDims[0])
         for (i in 0 until n)
             for (j in 0 until m)
