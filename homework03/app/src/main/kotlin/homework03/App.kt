@@ -3,6 +3,8 @@
  */
 package homework03
 
+import kotlinx.coroutines.runBlocking
+
 class App {
     val greeting: String
         get() {
@@ -10,6 +12,10 @@ class App {
         }
 }
 
-fun main() {
+fun main(args: Array<String>) {
     println(App().greeting)
+    runBlocking {
+        val topic = RedditClient.getTopic("Kotlin")
+        println(topic)
+    }
 }
