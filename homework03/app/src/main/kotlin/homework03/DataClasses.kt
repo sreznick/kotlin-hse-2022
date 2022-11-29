@@ -63,24 +63,38 @@ data class Comment(
     val author: String,
     val replyTo: Long?,
     val replies: List<Comment>,
-    val depth: Int
+    val depth: Int,
+    val id: Long
 ) {
     val snapshotTime = System.currentTimeMillis()
-    val id = commentsCount + 1
 }
 
 data class CommentsSnapshot(
     val comments: List<Comment>
 ) {
+    fun linearize(): List<Comment> {
+        val result: MutableList<Comment> = arrayListOf()
+
+        fun recursive(comm: Comment) {
+            result.add(comm)
+            for (child in comm.replies) {
+                recursive(child)
+            }
+        }
+
+        comments.forEach(::recursive)
+        return result
+    }
+
     companion object {
         fun deserialize(objectMapper: ObjectMapper, json: String): CommentsSnapshot {
 
             fun deserializeComment(comm: JsonNode, parentId: Long?, depth: Int): Comment = with(comm.get("data")) {
+                val curId = commentsCount++
                 val children: MutableList<Comment> = arrayListOf()
-                // TODO: parentID
                 try {
                     for (child in get("replies").get("data").get("children")) {
-                        children.add(deserializeComment(child, 0, depth + 1))
+                        children.add(deserializeComment(child, curId, depth + 1))
                     }
                 }
                 catch (_: NullPointerException) {}
@@ -93,11 +107,11 @@ data class CommentsSnapshot(
                     author = get("author_fullname").toPrettyString(),
                     replyTo = parentId,
                     replies = children,
-                    depth = depth
+                    depth = depth,
+                    id = curId
                 )
             }
 
-            println("Hello")
             val result: MutableList<Comment> = arrayListOf()
             val topLevelComments = objectMapper.readTree(json).get(1).get("data").get("children")
             for (comm in topLevelComments) {
