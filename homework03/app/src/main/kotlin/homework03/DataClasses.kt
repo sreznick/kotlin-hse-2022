@@ -1,6 +1,8 @@
 package homework03
 
 import com.fasterxml.jackson.annotation.JsonProperty
+import com.fasterxml.jackson.databind.JsonNode
+import com.fasterxml.jackson.databind.ObjectMapper
 
 data class Post(
     @JsonProperty("author_fullname") val author: String,
@@ -53,16 +55,55 @@ data class TopicSnapshot(
 
 var commentsCount = 0L
 
-data class CommentSnapshot(
+data class Comment(
     val creationTime: Double,
     val likes: Long,
     val dislikes: Long,
     val text: String,
     val author: String,
     val replyTo: Long?,
-    val replies: List<CommentSnapshot>,
+    val replies: List<Comment>,
     val depth: Int
 ) {
     val snapshotTime = System.currentTimeMillis()
     val id = commentsCount + 1
+}
+
+data class CommentsSnapshot(
+    val comments: List<Comment>
+) {
+    companion object {
+        fun deserialize(objectMapper: ObjectMapper, json: String): CommentsSnapshot {
+
+            fun deserializeComment(comm: JsonNode, parentId: Long?, depth: Int): Comment = with(comm.get("data")) {
+                val children: MutableList<Comment> = arrayListOf()
+                // TODO: parentID
+                try {
+                    for (child in get("replies").get("data").get("children")) {
+                        children.add(deserializeComment(child, 0, depth + 1))
+                    }
+                }
+                catch (_: NullPointerException) {}
+
+                return Comment(
+                    creationTime = get("created").asDouble(),
+                    likes = get("ups").asLong(),
+                    dislikes = get("downs").asLong(),
+                    text = get("body").toPrettyString(),
+                    author = get("author_fullname").toPrettyString(),
+                    replyTo = parentId,
+                    replies = children,
+                    depth = depth
+                )
+            }
+
+            println("Hello")
+            val result: MutableList<Comment> = arrayListOf()
+            val topLevelComments = objectMapper.readTree(json).get(1).get("data").get("children")
+            for (comm in topLevelComments) {
+                result.add(deserializeComment(comm, null, 0))
+            }
+            return CommentsSnapshot(result)
+        }
+    }
 }

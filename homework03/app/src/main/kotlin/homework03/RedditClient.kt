@@ -22,4 +22,9 @@ object RedditClient {
         val posts = objectMapper.readValue(postsJson, JsonPostsWrapper::class.java)
         return TopicSnapshot.create(topicMainData, posts)
     }
+
+    suspend fun getComments(title: String): CommentsSnapshot {
+        val json = httpClient.get("https://www.reddit.com/r/Kotlin/comments/$title/.json").body<String>()
+        return CommentsSnapshot.deserialize(objectMapper, json)
+    }
 }
