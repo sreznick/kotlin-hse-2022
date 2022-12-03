@@ -56,9 +56,58 @@ sealed class FList<T>: Iterable<T> {
      * Также для борьбы с бойлерплейтом были введены функция и свойство nil в компаньоне
      */
     data class Nil<T>(private val dummy: Int=0) : FList<T>() {
+        override val size: Int
+            get() = 0
+        override val isEmpty: Boolean
+            get() = true
+
+        override fun <U> fold(base: U, f: (U, T) -> U): U = base
+
+
+        override fun filter(f: (T) -> Boolean): FList<T> = Nil()
+
+        override fun <U> map(f: (T) -> U): FList<U> = Nil()
+
+        override fun iterator(): Iterator<T> {
+            return FListIterator(this)
+        }
+    }
+    private class FListIterator<T>(private var it: FList<T>) : Iterator<T> {
+        override fun hasNext(): Boolean = it is Cons<T>
+
+        override fun next(): T {
+            if (it is Cons<T>){
+                val ans = (it as Cons<T>).head
+                it = (it as Cons<T>).tail
+                return ans
+            } else {
+                throw ArrayIndexOutOfBoundsException()
+            }
+        }
+
     }
 
     data class Cons<T>(val head: T, val tail: FList<T>) : FList<T>() {
+        override val size: Int
+            get() = tail.size + 1
+        override val isEmpty: Boolean
+            get() = false
+
+        override fun <U> fold(base: U, f: (U, T) -> U): U = tail.fold(f(base, head), f)
+
+        override fun filter(f: (T) -> Boolean): FList<T> {
+            return if (f(head)) {
+                Cons(head, tail.filter(f))
+            } else {
+                tail.filter(f)
+            }
+        }
+
+        override fun <U> map(f: (T) -> U): FList<U> = Cons(f(head), tail.map(f))
+
+        override fun iterator(): Iterator<T> {
+            return FListIterator(this)
+        }
     }
 
     companion object {
@@ -67,8 +116,8 @@ sealed class FList<T>: Iterable<T> {
     }
 }
 
+
 // конструирование функционального списка в порядке следования элементов
 // требуемая сложность - O(n)
-fun <T> flistOf(vararg values: T): FList<T> {
-    TODO()
-}
+fun <T> flistOf(vararg values: T): FList<T> = if (values.isEmpty()) FList.Nil() else
+    FList.Cons(values[0], flistOf(*values.copyOfRange(1, values.size)))
