@@ -1,5 +1,4 @@
-
-interface Point: DimentionAware
+interface Point : DimentionAware
 
 /**
  * Реализация Point по умолчаению
@@ -9,5 +8,9 @@ interface Point: DimentionAware
  *
  * Сама коллекция параметров недоступна, доступ - через методы интерфейса
  */
-class DefaultPoint: Point {
+class DefaultPoint constructor(private vararg val coordinate: Int) : Point {
+    override val ndim: Int
+        get() = coordinate.size
+
+    override fun dim(i: Int): Int = coordinate[i]
 }
