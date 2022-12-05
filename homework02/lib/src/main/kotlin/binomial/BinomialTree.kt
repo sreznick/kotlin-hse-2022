@@ -33,18 +33,20 @@ class BinomialTree<T : Comparable<T>> private constructor(val value: T, val chil
      *
      * Требуемая сложность - O(1)
      */
-    override fun plus(other: BinomialTree<T>): BinomialTree<T> {
-        if (this.order != other.order) {
-            throw IllegalArgumentException()
-        }
-        if (this.value < other.value) {
-            return BinomialTree(this.value, FList.Cons(other, children))
-        } else {
-            return BinomialTree(other.value, FList.Cons(this, other.children))
-        }
-    }
+    override fun plus(other: BinomialTree<T>) = plus(this, other)
 
     companion object {
         fun <T : Comparable<T>> single(value: T): BinomialTree<T> = BinomialTree(value, FList.nil())
+
+        private fun <T : Comparable<T>> plus(b1: BinomialTree<T>, b2: BinomialTree<T>): BinomialTree<T> {
+            if (b1.order != b2.order) {
+                throw IllegalArgumentException()
+            }
+            if (b1.value <= b2.value) {
+                return BinomialTree(b1.value, FList.Cons(b2, b1.children))
+            } else {
+                return plus(b2, b1);
+            }
+        }
     }
 }
