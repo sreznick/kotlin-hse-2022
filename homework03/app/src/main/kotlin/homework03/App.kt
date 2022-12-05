@@ -3,13 +3,30 @@
  */
 package homework03
 
-class App {
-    val greeting: String
-        get() {
-            return "Hello World!"
-        }
+import com.soywiz.korio.async.launch
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.runBlocking
+
+//import com.soywiz.korio.async.launch
+
+
+fun main(args: Array<String>)  = runBlocking {
+    args.forEach {
+        launch  { parseReddit(it) }
+    }
+
+}
+//   val a =  app.getTopic("Kotlin")
+//   // println("a done")
+//    val c = app.getComments("https://www.reddit.com/r/Kotlin/comments/ipp2hi/yummy/")
+//    val sb = csvSerialize(c.comments, Comment::class)
+//    val asb = csvSerialize(a.topics, HotSnapshot::class)
+//   writeCsv("C:\\IndependentProgs\\KotlinHSe\\kotlin-hse-2022", "test.csv",asb)
+
+
+suspend fun parseReddit(topic: String) {
+    val client = RedditClient()
+    client.getAndSaveTopic(topic)
+
 }
 
-fun main() {
-    println(App().greeting)
-}
