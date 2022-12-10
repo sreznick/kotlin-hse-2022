@@ -44,6 +44,12 @@ dependencies {
     // Ktor CIO
     implementation("io.ktor:ktor-client-cio:2.1.3")
 
+    // Reflect
+    implementation("org.jetbrains.kotlin:kotlin-reflect:1.7.22")
+
+    // Korio
+    implementation("com.soywiz.korlibs.korio:korio-jvm:2.2.0")
+
 }
 
 application {
