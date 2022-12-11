@@ -3,13 +3,13 @@
  */
 package homework03
 
-class App {
-    val greeting: String
-        get() {
-            return "Hello World!"
-        }
-}
+import kotlinx.coroutines.launch
+import kotlinx.coroutines.runBlocking
 
-fun main() {
-    println(App().greeting)
+suspend fun main(args: Array<String>) = runBlocking {
+    val redditClient = RedditClient()
+    val pathToSaveFiles = "/Users/olegoratovskiy/Desktop/"
+    args.forEach {
+        launch { redditClient.saveTopicInfo(it, pathToSaveFiles) }
+    }
 }
