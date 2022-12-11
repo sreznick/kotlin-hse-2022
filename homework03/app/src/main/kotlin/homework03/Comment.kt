@@ -40,6 +40,7 @@ data class Comment(
     val replies: List<Comment>
 ) {
 
+    // Представление в линейной форме
     override fun toString(): String {
         val rep = replies.joinToString(
             separator = ", ",
