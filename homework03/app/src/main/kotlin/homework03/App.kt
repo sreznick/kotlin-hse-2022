@@ -1,5 +1,9 @@
 package homework03
 
+import com.soywiz.klogger.Console.ansiEscape
+import com.soywiz.korio.net.http.Http
+import com.soywiz.korio.net.http.createHttpClient
+import com.soywiz.korio.util.escape
 import homework03.dto.comment.LinearComment
 import homework03.dto.topic.TopicSnapshot
 import homework03.lib.Utils
@@ -8,6 +12,7 @@ import homework03.lib.csvSerialize
 import homework03.lib.writeCsv
 import kotlinx.coroutines.*
 import java.io.FileOutputStream
+import java.net.URLEncoder
 
 class App {
     private val httpClient = RedditClient()
@@ -34,7 +39,8 @@ class App {
 
             //Гарантируется за счет строки выше
             val linksPairs = Utils.getDiscussionLinks(topic)!!
-            val linearComments = linksPairs.map { async { parseComments(it.second, it.first) } }.map { it.await() }.flatten()
+            val linearComments =
+                linksPairs.map { async { parseComments(it.second, it.first) } }.map { it.await() }.flatten()
 
             Pair(topic.discussions, linearComments)
         }
