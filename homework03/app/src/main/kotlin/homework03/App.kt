@@ -4,24 +4,15 @@
 package homework03
 
 import com.soywiz.korio.async.launch
-import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.runBlocking
 
-//import com.soywiz.korio.async.launch
 
-
-fun main(args: Array<String>)  = runBlocking {
+fun main(args: Array<String>) = runBlocking {
     args.forEach {
-        launch  { parseReddit(it) }
+        launch { parseReddit(it) }
     }
 
 }
-//   val a =  app.getTopic("Kotlin")
-//   // println("a done")
-//    val c = app.getComments("https://www.reddit.com/r/Kotlin/comments/ipp2hi/yummy/")
-//    val sb = csvSerialize(c.comments, Comment::class)
-//    val asb = csvSerialize(a.topics, HotSnapshot::class)
-//   writeCsv("C:\\IndependentProgs\\KotlinHSe\\kotlin-hse-2022", "test.csv",asb)
 
 
 suspend fun parseReddit(topic: String) {
