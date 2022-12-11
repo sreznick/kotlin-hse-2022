@@ -16,7 +16,7 @@ class App {
 
     val greeting: String
         get() {
-            return "Hello world"
+            return "Hello World"
         }
 }
 
@@ -28,7 +28,7 @@ fun main(args: Array<String>): Unit = runBlocking {
         topics.add(async { redditClient.getTopic(topicName) }.await())
     }
     val topicsCsv = csvSerialize(topics, TopicSnapshot::class)
-    write(topicsCsv, "/Users/aleksa30/logs", "--subjects.csv")
+    write(topicsCsv, ".", "--subjects.csv")
 }
 
 
