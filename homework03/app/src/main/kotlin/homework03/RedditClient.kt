@@ -1,5 +1,6 @@
 package homework03
 
+import com.ctc.wstx.util.URLUtil
 import com.soywiz.korio.net.http.createHttpClient
 import homework03.dto.comment.CommentsSnapshot
 import homework03.dto.topic.TopicSnapshot
