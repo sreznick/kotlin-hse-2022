@@ -14,6 +14,7 @@ class CommentSnapshot(commentData: CommentsJson.CommentJsonData.CommentsData.Com
     val text = commentData.body
     val textHtml = commentData.body_html
     val author = commentData.author_fullname
+    val depth = commentData.depth
 }
 
 data class LinearComment(val creationTime: Double?, val upVotes: Int?, val downVotes: Int?, val text: String?, val author: String?, val id: Int, val parentId: Int?, val discussionId: String?)
