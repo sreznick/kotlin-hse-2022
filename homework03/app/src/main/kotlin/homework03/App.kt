@@ -10,24 +10,22 @@ import kotlinx.coroutines.*
 import java.io.FileOutputStream
 
 class App {
-    val httpClient = RedditClient();
-
-    val discussionIdGenerator = Utils.IdGenerator(1);
+    private val httpClient = RedditClient()
     val greeting: String
         get() {
             return "Hello World!"
         }
 
-    suspend fun parseComments(link: String, discussionId: String?): List<LinearComment> {
-        val commentsRaw = httpClient.getComments(link);
+    private suspend fun parseComments(link: String, discussionId: String?): List<LinearComment> {
+        val commentsRaw = httpClient.getComments(link)
         if (commentsRaw?.comments == null) {
             throw RuntimeException("Error while parsing comments")
         }
-        return getLinear(commentsRaw.comments, discussionId);
+        return getLinear(commentsRaw.comments, discussionId)
     }
 
 
-    suspend fun parseTopicAndComments(name: String): Pair<List<TopicSnapshot.TopicDiscussion>, List<LinearComment>> =
+    private suspend fun parseTopicAndComments(name: String): Pair<List<TopicSnapshot.TopicDiscussion>, List<LinearComment>> =
         coroutineScope {
             val topic = httpClient.getTopic(name)
             if (topic.discussions == null) {
@@ -35,7 +33,7 @@ class App {
             }
 
             //Гарантируется за счет строки выше
-            val linksPairs = Utils.getDiscussionLinks(topic, discussionIdGenerator)!!
+            val linksPairs = Utils.getDiscussionLinks(topic)!!
             val linearComments = linksPairs.map { async { parseComments(it.second, it.first) } }.map { it.await() }.flatten()
 
             Pair(topic.discussions, linearComments)
@@ -61,7 +59,7 @@ fun main(args: Array<String>): Unit = runBlocking {
         println("Launch program: script [topics]")
     } else {
         try {
-            App().parseAndWrite(args.toList(), "--subjects.csv", "--comments.csv");
+            App().parseAndWrite(args.toList(), "--subjects.csv", "--comments.csv")
             println("Success parsing")
         } catch (exception: RuntimeException) {
             println("Error while parsing: ${exception.message}")
