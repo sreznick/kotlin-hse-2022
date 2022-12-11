@@ -7,3 +7,4 @@ data class TopicSnapshot(
     val infos: List<TopicInfoDTO>,
     val date: Date
 )
+

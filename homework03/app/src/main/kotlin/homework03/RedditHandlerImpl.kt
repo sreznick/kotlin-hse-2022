@@ -6,56 +6,69 @@ package homework03
 import com.fasterxml.jackson.databind.DeserializationFeature
 import com.fasterxml.jackson.databind.JsonNode
 import com.fasterxml.jackson.databind.ObjectMapper
-import com.fasterxml.jackson.module.kotlin.readValue
 import com.fasterxml.jackson.module.kotlin.registerKotlinModule
+import homework03.csv.csvSerialize
 import homework03.model.*
 import kotlinx.coroutines.*
+import java.io.BufferedReader
+import java.io.BufferedWriter
+import java.io.FileReader
+import java.io.FileWriter
 import java.net.URL
 import java.net.http.HttpClient
 import java.net.http.HttpRequest
 import java.net.http.HttpResponse
-import java.time.LocalDate
 import java.util.*
-import kotlin.concurrent.timer
-import kotlin.time.Duration.Companion.microseconds
 
-class RedditHandlerImpl {
+class RedditHandlerImpl : RedditHandler {
     init {
         objectMapper.configure(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, false)
     }
-    val greeting: String
-        get() {
-            return "Hello World!"
-        }
-    suspend fun getComments(title: String): CommentsSnapshot {
+    override suspend fun getComments(title: String): CommentsSnapshot {
         val url = urlMapper.mapToJsonURL(title)
+        val node = objectMapper.readTree(getContent(url))
+        val topicId = node
+            .path(0)
+            .path("data")
+            .get("children")
+            .path(0)
+            .path("data")
+            .get("id")
+            .asText()
         return CommentsSnapshot(
-            getComments(objectMapper.readTree(getContent(url))
-                .path(0)
-                .get("data")
-                .get("children")),
+            node.map{
+                    getComments(it,
+                        topicId)}
+                .flatten(),
             Date()
         )
-
     }
 
-    suspend fun getComments(node : JsonNode) : List<CommentDTO> {
-        return node.map {
-            val data = it.path("data")
-            val children = data.get("children")
-            CommentDTO(
+    private fun getComments(node : JsonNode, topicId: String) : List<CommentDTO> {
+            val data = node
+                .path("data")
+                .path("children")
+                .path(0)
+                .get("data")
+
+            val children = data.get("replies")
+            return node.map{CommentDTO(
                 data.get("created").asLong(),
                 data.get("ups").asInt(),
                 data.get("downs").asInt(),
-                data.get("selftext").asText(),
+                data.get("body")?.asText(),
                 data.get("author_fullname").asText(),
-                if (children == null) emptyList() else getComments(children)
-            )
-        }
+                if (children != null && !children.isEmpty)
+                    getComments(children, topicId)
+                else
+                    emptyList(),
+                data.get("id").asText(),
+                topicId
+            )}
     }
 
 
-    suspend fun getTopic(name: String): TopicSnapshot {
+    override suspend fun getTopic(name: String): TopicSnapshot {
         return TopicSnapshot(
             getSubredditAbout(name),
             getTopicInfo(name),
@@ -75,7 +88,7 @@ class RedditHandlerImpl {
         return getJsonTree(url)
             .path("data")
             .path("children")
-            .map { it ->
+            .map {
                 objectMapper.treeToValue(it.path("data"),
                     TopicInfoDTO::class.java)
             }
@@ -98,17 +111,57 @@ class RedditHandlerImpl {
     companion object {
         private val objectMapper = ObjectMapper().registerKotlinModule()
         private val urlMapper = URLMapper()
-        private val topicInfoListType
-        = objectMapper.typeFactory.constructCollectionType(List::class.java, TopicInfoDTO::class.java)
     }
 }
 
+private fun List<CommentDTO>.flatten(list: MutableList<CommentDTO>) : List<CommentDTO> {
+    if (this.isEmpty())
+        return list
+    this.map {
+        list.add(it)
+        it.children.flatten(list)
+    }
+    return list
+}
+private fun List<CommentDTO>.flatten() : List<CommentDTO> = this.flatten(ArrayList())
+
+suspend fun <T, R> Iterable<T>.mapParallel(transform: (T) -> R): List<R> = coroutineScope {
+    map { async { transform(it) } }.map { it.await() }
+}
 fun main() = runBlocking<Unit> {
     launch {
-        val start = System.nanoTime()
-        RedditHandlerImpl().getTopic("https://www.reddit.com/r/Kotlin/")
-        RedditHandlerImpl().getComments("https://www.reddit.com/r/Kotlin/comments/zfgd16/shifting_from_flutter_to_kotlin/")
-        val end = System.nanoTime()
-        println(end - start)
+        val redditHandler = RedditHandlerImpl()
+        withContext(Dispatchers.IO) {
+            BufferedReader(
+                FileReader("topic_input.txt")
+            )
+        }
+            .lines()
+            .toList()
+            .map {
+            async {  redditHandler.getTopic(it) } }.awaitAll().map{ it.infos}
+            .forEach {
+                val out = BufferedWriter(FileWriter("topics.csv"))
+                out.write(csvSerialize(it, TopicInfoDTO::class))
+                out.flush()
+            }
+        withContext(Dispatchers.IO) {
+            BufferedReader(
+                FileReader("comment_input.txt")
+            )
+        }
+            .lines()
+            .toList()
+            .map {
+                async {  redditHandler.getComments(it) } }.awaitAll().map{it.comments }
+            .forEach {
+                val out = BufferedWriter(FileWriter("comments.csv"))
+                out.write(
+                    csvSerialize(
+                    it.flatten(), CommentDTO::class))
+                out.flush()
+            }
+
     }
 }
+

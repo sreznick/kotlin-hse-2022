@@ -4,7 +4,9 @@ data class CommentDTO(
     val created: Long,
     val ups: Int,
     val downs: Int,
-    val selftext: String,
+    val body: String?,
     val author: String,
-    val children: List<CommentDTO>
+    val children: List<CommentDTO>,
+    val id: String,
+    val topicId: String
 )
