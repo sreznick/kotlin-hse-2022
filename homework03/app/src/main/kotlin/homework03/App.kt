@@ -3,13 +3,38 @@
  */
 package homework03
 
-class App {
-    val greeting: String
-        get() {
-            return "Hello World!"
-        }
-}
+import com.soywiz.korio.file.VfsOpenMode
+import com.soywiz.korio.file.std.localVfs
+import com.soywiz.korio.stream.writeString
+import kotlinx.coroutines.runBlocking
+import kotlin.reflect.KClass
 
-fun main() {
-    println(App().greeting)
+object App {
+    private val reddit = RedditClient
+
+    private val csvSerializer = CsvSerializer
+
+    fun<T: Any> serialize(data: Iterable<T>, klass: KClass<T>): String = csvSerializer.csvSerialize(data, klass)
+    suspend fun getComments(topic: String, title: String) = reddit.getComments(topic, title)
+    suspend fun getTopic(name: String) = reddit.getTopic(name)
+    suspend fun write(csv: String, path: String, filename: String) {
+        val file = localVfs(path)[filename].open(VfsOpenMode.CREATE)
+        file.writeString(csv)
+        file.close()
+    }
+}
+fun main(args: Array<String>) = runBlocking {
+    if (args.size != 3) println("Incorrect number of arguments")
+    else {
+        with(App) {
+            val topic = listOf(getTopic(args[0]))
+            val comments = getComments(args[0], args[1])
+            write(serialize(topic, TopicSnapshot::class), args[2], "--subjects.csv")
+            write(serialize(comments.commentsAsList, CommentsSnapshot.Comment::class), args[2], "--comments.csv")
+        }
+    }
+
+
+
+
 }
