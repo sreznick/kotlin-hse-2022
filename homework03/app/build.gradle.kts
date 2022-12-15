@@ -40,6 +40,8 @@ dependencies {
     implementation("io.ktor:ktor-client-cio:2.2.1")
 
     implementation("io.ktor:ktor-client-content-negotiation:2.2.1")
+
+    implementation("com.soywiz.korlibs.korio:korio-jvm:2.2.0")
 }
 
 application {

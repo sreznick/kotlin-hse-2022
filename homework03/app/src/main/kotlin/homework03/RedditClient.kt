@@ -32,18 +32,17 @@ object RedditClient {
             posts.data.children.map { it.data })
     }
 
-    private fun mapToSnapshot(info: CommentInfo, id: Int, depth: Int): Pair<Int, List<CommentsSnapshot>> {
+    private fun mapToSnapshot(info: CommentInfo?, id: Int, depth: Int): Pair<Int, List<CommentsSnapshot>> {
+        if (info == null) {
+            return Pair(id, emptyList())
+        }
         val replies = mutableListOf<CommentsSnapshot>()
         var myId = id
         info.data.children.forEach { kind ->
             when (kind) {
                 is CommentInfoChildKind1 -> {
-                    var reply = emptyList<CommentsSnapshot>()
-                    if (kind.data.replies != null) {
-                        val pair = mapToSnapshot(kind.data.replies, myId, depth + 1)
-                        myId = pair.first
-                        reply = pair.second
-                    }
+                    val pair = mapToSnapshot(kind.data.replies, myId, depth + 1)
+                    myId = pair.first
                     replies.add(
                         CommentsSnapshot(
                             kind.data.created_utc,
@@ -52,7 +51,7 @@ object RedditClient {
                             kind.data.body,
                             kind.data.author,
                             -1,
-                            reply,
+                            pair.second,
                             depth,
                             myId
                         )

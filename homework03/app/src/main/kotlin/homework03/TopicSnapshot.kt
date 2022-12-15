@@ -25,6 +25,5 @@ data class Post(
     val ups: Long,
     val downs: Long,
     val title: String,
-    val selftext: String?,
-    val selftext_html: String?
+    val selftext: String?
 )

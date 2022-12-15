@@ -4,14 +4,25 @@
 package homework03
 
 
+import com.soywiz.korio.dynamic.KDynamic.Companion.map
 import kotlinx.coroutines.*
 
-fun main() {
-    runBlocking {
-        val topic = RedditClient.getTopic("Kotlin")
-        val comments1 = RedditClient.getComments("Kotlin", "z02i23/what_is_dispatchersdefaults_maximum_number_of")
-        val comments2 = RedditClient.getComments("Kotlin", "z3qwxa/additional_monads_not_defined_in_arrow")
-        println(comments2.linearize().map { it.id })
-        println(topic.description)
+//z3qwxa/additional_monads_not_defined_in_arrow
+
+fun main(args: Array<String>) = runBlocking {
+
+    val topicJobs = arrayListOf<Deferred<TopicSnapshot>>()
+    val commentJobs = arrayListOf<Deferred<CommentsSnapshot>>()
+    for (i in 0 until args.size step 2) {
+        topicJobs.add(async { RedditClient.getTopic(args[i]) })
+        commentJobs.add(async { RedditClient.getComments(args[i], args[i + 1]) })
     }
+
+    val posts = topicJobs.awaitAll().map { it.posts }.flatten()
+    val topicsCsv = csvSerialize(posts, Post::class)
+    CsvWriter.write(topicsCsv, "subjects.csv")
+
+    val comments = commentJobs.awaitAll().map { it.linearize() }.flatten()
+    val commentsCsv = csvSerialize(comments, CommentsSnapshot::class)
+    CsvWriter.write(commentsCsv, "comments.csv")
 }

@@ -16,7 +16,7 @@ data class CommentsSnapshot(
     val id: Int
 ) {
     fun linearize(): List<CommentsSnapshot> {
-        return listOf(this).plus(
+        return listOf(this.copy(replies = emptyList())).plus(
             replies.map {
                 it.linearize()
             }.flatten()
