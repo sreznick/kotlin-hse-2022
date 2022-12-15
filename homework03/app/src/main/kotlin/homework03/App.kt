@@ -3,13 +3,15 @@
  */
 package homework03
 
-class App {
-    val greeting: String
-        get() {
-            return "Hello World!"
-        }
-}
+
+import kotlinx.coroutines.*
 
 fun main() {
-    println(App().greeting)
+    runBlocking {
+        val topic = RedditClient.getTopic("Kotlin")
+        val comments1 = RedditClient.getComments("Kotlin", "z02i23/what_is_dispatchersdefaults_maximum_number_of")
+        val comments2 = RedditClient.getComments("Kotlin", "z3qwxa/additional_monads_not_defined_in_arrow")
+        println(comments2.linearize().map { it.id })
+        println(topic.description)
+    }
 }
