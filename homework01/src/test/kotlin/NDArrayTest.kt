@@ -304,15 +304,28 @@ internal class NDArrayTest {
 
         val result = data1.dot(data2)
 
-        assertTrue(result.ndim == 1)
         assertEquals(5, result.size)
-        assertEquals(5, result.dim(0))
+        assertTrue(result.ndim in (1..2))
 
-        assertEquals(0 * 1 + 1 * 11 + 2 * 21, result.at(DefaultPoint(0)))
-        assertEquals(10 * 1 + 11 * 11 + 12 * 21, result.at(DefaultPoint(1)))
-        assertEquals(20 * 1 + 21 * 11 + 22 * 21, result.at(DefaultPoint(2)))
-        assertEquals(30 * 1 + 31 * 11 + 32 * 21, result.at(DefaultPoint(3)))
-        assertEquals(40 * 1 + 41 * 11 + 42 * 21, result.at(DefaultPoint(4)))
+        if (result.ndim == 1) {
+            assertTrue(result.ndim == 1)
+            assertEquals(5, result.dim(0))
 
+            assertEquals(0 * 1 + 1 * 11 + 2 * 21, result.at(DefaultPoint(0)))
+            assertEquals(10 * 1 + 11 * 11 + 12 * 21, result.at(DefaultPoint(1)))
+            assertEquals(20 * 1 + 21 * 11 + 22 * 21, result.at(DefaultPoint(2)))
+            assertEquals(30 * 1 + 31 * 11 + 32 * 21, result.at(DefaultPoint(3)))
+            assertEquals(40 * 1 + 41 * 11 + 42 * 21, result.at(DefaultPoint(4)))
+        } else {
+            assertTrue(result.ndim == 2)
+            assertEquals(5, result.dim(0))
+            assertEquals(1, result.dim(1))
+
+            assertEquals(0 * 1 + 1 * 11 + 2 * 21, result.at(DefaultPoint(0, 0)))
+            assertEquals(10 * 1 + 11 * 11 + 12 * 21, result.at(DefaultPoint(1, 0)))
+            assertEquals(20 * 1 + 21 * 11 + 22 * 21, result.at(DefaultPoint(2, 0)))
+            assertEquals(30 * 1 + 31 * 11 + 32 * 21, result.at(DefaultPoint(3, 0)))
+            assertEquals(40 * 1 + 41 * 11 + 42 * 21, result.at(DefaultPoint(4, 0)))
+        }
     }
 }
