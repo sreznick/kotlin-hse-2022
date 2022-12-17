@@ -3,6 +3,9 @@
  */
 package homework03
 
+import kotlinx.coroutines.runBlocking
+
+
 class App {
     val greeting: String
         get() {
@@ -10,6 +13,9 @@ class App {
         }
 }
 
-fun main() {
-    println(App().greeting)
+suspend fun main(args: Array<String>) = runBlocking {
+    val redditClient = RedditClient()
+    for (title in args) {
+        redditClient.parse(title, "/Users/Иван/Desktop")
+    }
 }
