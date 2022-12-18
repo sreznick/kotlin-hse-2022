@@ -3,13 +3,21 @@
  */
 package homework03
 
-class App {
-    val greeting: String
-        get() {
-            return "Hello World!"
-        }
+import com.soywiz.korio.async.launch
+import kotlinx.coroutines.runBlocking
+
+
+fun main(args: Array<String>) = runBlocking {
+    args.forEach {
+        launch { parseReddit(it) }
+    }
+
 }
 
-fun main() {
-    println(App().greeting)
+
+suspend fun parseReddit(topic: String) {
+    val client = RedditClient()
+    client.getAndSaveTopic(topic)
+
 }
+
