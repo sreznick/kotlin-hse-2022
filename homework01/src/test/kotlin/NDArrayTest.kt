@@ -7,13 +7,13 @@ internal class NDArrayTest {
         val data = DefaultNDArray.zeros(DefaultShape(10))
 
         for (i in 0 until 10) {
-            assertEquals(0, data.at(DefaultPoint( i)))
+            assertEquals(0, data.at(DefaultPoint(i)))
         }
     }
 
     @Test
     fun testOnes() {
-        val data =DefaultNDArray.ones(DefaultShape(10))
+        val data = DefaultNDArray.ones(DefaultShape(10))
 
         for (i in 0 until 10) {
             assertEquals(1, data.at(DefaultPoint(i)))
@@ -22,7 +22,7 @@ internal class NDArrayTest {
 
     @Test
     fun testSet1D() {
-        val data =DefaultNDArray.ones(DefaultShape(10))
+        val data = DefaultNDArray.ones(DefaultShape(10))
         data.set(DefaultPoint(3), 34)
 
         for (i in 0 until 10) {
@@ -30,17 +30,6 @@ internal class NDArrayTest {
                 assertEquals(1, data.at(DefaultPoint(i)))
             } else {
                 assertEquals(34, data.at(DefaultPoint(i)))
-            }
-        }
-    }
-
-    @Test
-    fun testZeros2D() {
-        val data = DefaultNDArray.zeros(DefaultShape(10, 2))
-
-        for (i in 0 until 10) {
-            for (j in 0 until 2) {
-                assertEquals(0, data.at(DefaultPoint(i, j)))
             }
         }
     }
@@ -60,18 +49,6 @@ internal class NDArrayTest {
             }
         }
     }
-
-    @Test
-    fun testOnes2D() {
-        val data = DefaultNDArray.ones(DefaultShape(10, 2))
-
-        for (i in 0 until 10) {
-            for (j in 0 until 2) {
-                assertEquals(1, data.at(DefaultPoint(i, j)))
-            }
-        }
-    }
-
 
     @Test
     fun testSet3D() {
@@ -126,7 +103,7 @@ internal class NDArrayTest {
     fun testView() {
         val data = DefaultNDArray.ones(DefaultShape(10, 5))
         val data2 = data.view()
-
+        val data3 = data2.view().view().view().view()
         data.set(DefaultPoint(3, 4), 34)
         data2.set(DefaultPoint(4, 3), 34)
 
@@ -134,175 +111,56 @@ internal class NDArrayTest {
         assertEquals(34, data.at(DefaultPoint(4, 3)))
         assertEquals(34, data2.at(DefaultPoint(3, 4)))
         assertEquals(34, data2.at(DefaultPoint(4, 3)))
+        assertEquals(34, data3.at(DefaultPoint(3, 4)))
+        assertEquals(34, data3.at(DefaultPoint(4, 3)))
     }
 
     @Test
-    fun testAdd1d() {
-        val data1 = DefaultNDArray.ones(DefaultShape(5))
-        val data2 = DefaultNDArray.ones(DefaultShape(5))
-
-        data1.set(DefaultPoint(0), 12)
-        data1.set(DefaultPoint(1), 23)
-        data1.set(DefaultPoint(2), 34)
-        data1.set(DefaultPoint(3), 45)
-        data1.set(DefaultPoint(4), 56)
-
-        data2.set(DefaultPoint(0), 2)
-        data2.set(DefaultPoint(1), 4)
-        data2.set(DefaultPoint(2), 6)
-        data2.set(DefaultPoint(3), 8)
-        data2.set(DefaultPoint(4), 10)
-
-        data1.add(data2)
-
-        assertEquals(14, data1.at(DefaultPoint(0)))
-        assertEquals(27, data1.at(DefaultPoint(1)))
-        assertEquals(40, data1.at(DefaultPoint(2)))
-        assertEquals(53, data1.at(DefaultPoint(3)))
-        assertEquals(66, data1.at(DefaultPoint(4)))
-    }
-
-    @Test
-    fun testAdd1dSelf() {
-        val data1 = DefaultNDArray.ones(DefaultShape(5))
-
-        data1.set(DefaultPoint(0), 12)
-        data1.set(DefaultPoint(1), 23)
-        data1.set(DefaultPoint(2), 34)
-        data1.set(DefaultPoint(3), 45)
-        data1.set(DefaultPoint(4), 56)
-
-        data1.add(data1)
-
-        assertEquals(24, data1.at(DefaultPoint(0)))
-        assertEquals(46, data1.at(DefaultPoint(1)))
-        assertEquals(68, data1.at(DefaultPoint(2)))
-        assertEquals(90, data1.at(DefaultPoint(3)))
-        assertEquals(112, data1.at(DefaultPoint(4)))
-    }
-
-
-    @Test
-    fun testAdd2d1d() {
-        val data1 = DefaultNDArray.ones(DefaultShape(5, 3))
-        val data2 = DefaultNDArray.ones(DefaultShape(5))
-        for (i in 0 until 5) {
-            for (j in 0 until 3) {
-                data1.set(DefaultPoint(i, j), i * 10 + j)
-            }
-        }
-
-        data2.set(DefaultPoint(0), 12)
-        data2.set(DefaultPoint(1), 23)
-        data2.set(DefaultPoint(2), 34)
-        data2.set(DefaultPoint(3), 45)
-        data2.set(DefaultPoint(4), 56)
-
-        data1.add(data2)
-
-        assertEquals(12, data1.at(DefaultPoint(0, 0)))
-        assertEquals(13, data1.at(DefaultPoint(0, 1)))
-        assertEquals(14, data1.at(DefaultPoint(0, 2)))
-        assertEquals(33, data1.at(DefaultPoint(1, 0)))
-        assertEquals(34, data1.at(DefaultPoint(1, 1)))
-        assertEquals(35, data1.at(DefaultPoint(1, 2)))
-        assertEquals(54, data1.at(DefaultPoint(2, 0)))
-        assertEquals(55, data1.at(DefaultPoint(2, 1)))
-        assertEquals(56, data1.at(DefaultPoint(2, 2)))
-        assertEquals(75, data1.at(DefaultPoint(3, 0)))
-        assertEquals(76, data1.at(DefaultPoint(3, 1)))
-        assertEquals(77, data1.at(DefaultPoint(3, 2)))
-        assertEquals(96, data1.at(DefaultPoint(4, 0)))
-        assertEquals(97, data1.at(DefaultPoint(4, 1)))
-        assertEquals(98, data1.at(DefaultPoint(4, 2)))
-    }
-
-    @Test
-    fun testDot() {
-        val data1 = DefaultNDArray.ones(DefaultShape(5, 3))
+    fun testAddWithDifferentShape() {
+        val data = DefaultNDArray.ones(DefaultShape(3, 2, 2))
         val data2 = DefaultNDArray.ones(DefaultShape(3, 2))
+        data2.add(data2)
+        data2.set(DefaultPoint(2, 1), 10)
 
-        for (i in 0 until 5) {
-            for (j in 0 until 3) {
-                data1.set(DefaultPoint(i, j), i * 10 + j)
-            }
-        }
+        data.add(data2)
 
-        for (i in 0 until 3) {
-            for (j in 0 until 2) {
-                data2.set(DefaultPoint(i, j), i * 10 + j)
-            }
-        }
-
-        val result = data1.dot(data2)
-
-        assertEquals(2, result.ndim)
-        assertEquals(5, result.dim(0))
-        assertEquals(2, result.dim(1))
-
-        assertEquals(0 * 0 + 1 * 10 + 2 * 20, result.at(DefaultPoint(0, 0)))
-        assertEquals(0 * 1 + 1 * 11 + 2 * 21, result.at(DefaultPoint(0, 1)))
-        assertEquals(10 * 0 + 11 * 10 + 12 * 20, result.at(DefaultPoint(1, 0)))
-        assertEquals(10 * 1 + 11 * 11 + 12 * 21, result.at(DefaultPoint(1, 1)))
-        assertEquals(20 * 0 + 21 * 10 + 22 * 20, result.at(DefaultPoint(2, 0)))
-        assertEquals(20 * 1 + 21 * 11 + 22 * 21, result.at(DefaultPoint(2, 1)))
-        assertEquals(30 * 0 + 31 * 10 + 32 * 20, result.at(DefaultPoint(3, 0)))
-        assertEquals(30 * 1 + 31 * 11 + 32 * 21, result.at(DefaultPoint(3, 1)))
-        assertEquals(40 * 0 + 41 * 10 + 42 * 20, result.at(DefaultPoint(4, 0)))
-        assertEquals(40 * 1 + 41 * 11 + 42 * 21, result.at(DefaultPoint(4, 1)))
-
-        assertEquals(0, data1.at(DefaultPoint(0, 0)))
-        assertEquals(1, data1.at(DefaultPoint(0, 1)))
-
-        assertEquals(0, data2.at(DefaultPoint(0, 0)))
-
-    }
-
-
-    @Test
-    fun testDotSingle() {
-        val data1 = DefaultNDArray.ones(DefaultShape(5, 3))
-        val data2 = DefaultNDArray.ones(DefaultShape(3, 1))
-
-        for (i in 0 until 5) {
-            for (j in 0 until 3) {
-                data1.set(DefaultPoint(i, j), i * 10 + j)
-            }
-        }
-
-        for (i in 0 until 3) {
-            data2.set(DefaultPoint(i, 0), i * 10 + 1)
-        }
-
-        val result = data1.dot(data2)
-
-        assertTrue(result.ndim == 2)
-        assertEquals(5, result.size)
-        assertEquals(5, result.dim(0))
-
-        assertEquals(0 * 1 + 1 * 11 + 2 * 21, result.at(DefaultPoint(0, 0)))
-        assertEquals(10 * 1 + 11 * 11 + 12 * 21, result.at(DefaultPoint(1, 0)))
-        assertEquals(20 * 1 + 21 * 11 + 22 * 21, result.at(DefaultPoint(2, 0)))
-        assertEquals(30 * 1 + 31 * 11 + 32 * 21, result.at(DefaultPoint(3, 0)))
-        assertEquals(40 * 1 + 41 * 11 + 42 * 21, result.at(DefaultPoint(4, 0)))
+        assertEquals(11, data.at(DefaultPoint(2, 1, 0)))
+        assertEquals(11, data.at(DefaultPoint(2, 1, 1)))
+        assertEquals(3, data.at(DefaultPoint(2, 0, 1)))
     }
 
     @Test
-    fun testDotVector() {
-        val data1 = DefaultNDArray.ones(DefaultShape(5, 3))
-        val data2 = DefaultNDArray.ones(DefaultShape(3))
+    fun testVectorDotVector() {
+        val v1 = DefaultNDArray.ones(DefaultShape(1, 5))
+        val v2 = DefaultNDArray.ones(DefaultShape(5, 1))
+        val w1 = v1.copy()
+        val w2 = v2.copy()
 
-        for (i in 0 until 5) {
-            for (j in 0 until 3) {
-                data1.set(DefaultPoint(i, j), i * 10 + j)
-            }
-        }
+        assertDoesNotThrow { v1.dot(v2) }
+        assertDoesNotThrow { w2.dot(w1) }
 
-        for (i in 0 until 3) {
-            data2.set(DefaultPoint(i), i * 10 + 1)
-        }
+        val res1 = v1.dot(v2)
+        val res2 = w2.dot(w1)
 
-        val result = data1.dot(data2)
+
+        assertEquals(res2.dim(0), 5)
+        assertEquals(res2.dim(1), 5)
+
+        assertEquals(res1.at(DefaultPoint(0, 0)), 5)
+
+        assertEquals(res2.dim(0), 5)
+        assertEquals(res2.dim(1), 5)
+    }
+
+    @Test
+    fun testWithAddDifferentShape() {
+        val data = DefaultNDArray.ones(DefaultShape(4, 3, 2))
+        val data2 = DefaultNDArray.ones(DefaultShape(4, 3))
+
+        data.set(DefaultPoint(2, 2, 0), 34)
+        data2.set(DefaultPoint(2, 2), 4)
+        data2.set(DefaultPoint(0, 1), 75)
+        data.set(DefaultPoint(0, 1, 1), 57)
 
         assertEquals(5, result.size)
         assertTrue(result.ndim in (1..2))
