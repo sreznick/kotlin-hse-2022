@@ -3,12 +3,33 @@
  */
 package homework03
 
+import kotlinx.coroutines.runBlocking
 import kotlin.test.Test
 import kotlin.test.assertNotNull
 
 class AppTest {
     @Test fun appHasAGreeting() {
-        val classUnderTest = App()
-        assertNotNull(classUnderTest.greeting, "app should have a greeting")
+        //No greeting
+    }
+    @Test
+    fun redditClientTests() {
+        val client = RedditClient
+        lateinit var topicSnapshot : TopicSnapshot
+        runBlocking {
+            topicSnapshot = client.getTopic("Kotlin")
+        }
+
+        lateinit var commentsSnapshot: CommentsSnapshot
+        runBlocking {
+            commentsSnapshot = client.getComments("Kotlin", "z3qwxa/additional_monads_not_defined_in_arrow/")
+        }
+        assertNotNull(topicSnapshot.creationTime)
+        assertNotNull(topicSnapshot.description)
+        assertNotNull(topicSnapshot.onlineSubs)
+        assertNotNull(topicSnapshot.posts)
+        assertNotNull(commentsSnapshot.commentsAsList)
+        assertNotNull(commentsSnapshot.commentsAsTree)
+
+
     }
 }
