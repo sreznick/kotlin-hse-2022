@@ -24,7 +24,7 @@ interface SelfMergeable<T> {
 
 class BinomialTree<T: Comparable<T>> private constructor(val value: T, val children: FList<BinomialTree<T>>): SelfMergeable<BinomialTree<T>> {
     // порядок дерева
-    val order: Int = TODO()
+    val order: Int = children.size
 
     /*
      * слияние деревьев
@@ -33,10 +33,12 @@ class BinomialTree<T: Comparable<T>> private constructor(val value: T, val child
      * Требуемая сложность - O(1)
      */
     override fun plus(other: BinomialTree<T>): BinomialTree<T> {
-        TODO()
+        if (order != other.order) throw IllegalArgumentException("Can't merge binomial trees with different orders")
+        val (higher, lower) = if (value < other.value) (this to other) else (other to this)
+        return BinomialTree(higher.value, FList.Cons(lower, higher.children))
     }
 
     companion object {
-        fun <T: Comparable<T>> single(value: T): BinomialTree<T> = TODO()
+        fun <T: Comparable<T>> single(value: T): BinomialTree<T> = BinomialTree(value, flistOf())
     }
 }
