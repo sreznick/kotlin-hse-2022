@@ -37,7 +37,7 @@ private fun StringBuilder.serializeValue(value: Any) = apply {
 
 private fun StringBuilder.serializeString(value: String) = apply {
     append('"')
-    append(value)
+    append(value.replace("\"", "\"\""))
     append('"')
 }
 

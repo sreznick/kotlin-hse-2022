@@ -23,6 +23,9 @@ dependencies {
 // https://mvnrepository.com/artifact/com.fasterxml.jackson.module/jackson-module-kotlin
     implementation("com.fasterxml.jackson.module:jackson-module-kotlin:2.14.1")
 
+    implementation ("com.soywiz.korlibs.korio:korio-jvm:2.4.8")
+
+
     // https://mvnrepository.com/artifact/org.jetbrains.kotlinx/kotlinx-coroutines-core
     implementation("org.jetbrains.kotlinx:kotlinx-coroutines-core:1.6.4")
 
