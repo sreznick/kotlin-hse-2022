@@ -3,13 +3,27 @@
  */
 package homework03
 
-class App {
-    val greeting: String
-        get() {
-            return "Hello World!"
-        }
-}
+import homework03.client.RedditClient
+import homework03.csv.CsvWriter
+import homework03.csv.csvSerialize
+import homework03.json.comment.Comment
+import homework03.json.comment.CommentsSnapshot
+import homework03.json.topic.TopicSnapshot
+import kotlinx.coroutines.runBlocking
 
-fun main() {
-    println(App().greeting)
+fun main(args: Array<String>) = runBlocking{
+    if (args.size % 2 == 0 || args.size < 3) {
+        throw IllegalArgumentException("Expected path and pairs <topic, comment>")
+    }
+    val topicsSnapshots = mutableListOf<TopicSnapshot>()
+    val commentsSnapshots = mutableListOf<CommentsSnapshot>()
+    val pathToSave = args[0]
+    for (i in 1 until args.size step 2) {
+        topicsSnapshots.add(RedditClient.getTopic(args[i]))
+        commentsSnapshots.add(RedditClient.getComments(args[i], args[i + 1]))
+    }
+    val topicsCsv = csvSerialize(topicsSnapshots, TopicSnapshot::class)
+    val commentsCsv = csvSerialize(commentsSnapshots.map { it.linearize() }.flatten(), Comment::class)
+    CsvWriter.write(topicsCsv, pathToSave, "--subjects.csv")
+    CsvWriter.write(commentsCsv, pathToSave, "--comments.csv")
 }
