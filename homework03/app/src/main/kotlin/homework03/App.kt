@@ -3,6 +3,11 @@
  */
 package homework03
 
+import com.soywiz.korio.file.VfsOpenMode
+import com.soywiz.korio.file.std.localVfs
+import com.soywiz.korio.stream.writeString
+import kotlinx.coroutines.async
+import kotlinx.coroutines.runBlocking
 class App {
     val greeting: String
         get() {
@@ -10,6 +15,22 @@ class App {
         }
 }
 
-fun main() {
-    println(App().greeting)
+fun main(args: Array<String>): Unit = runBlocking {
+    val client = RedditClient()
+    val topics = mutableListOf<TopicSnapshot>()
+
+    for (topicName in args) {
+        topics.add(async { client.getTopic(topicName) }.await())
+    }
+    val serializedTopics = serialize(topics, TopicSnapshot::class)
+    write(serializedTopics, ".", "--subjects.csv")
+}
+
+
+suspend fun write(serialized: String, path: String, name: String) {
+    val fileVfs = localVfs(path)
+    fileVfs[name].delete()
+    val file = fileVfs[name].open(VfsOpenMode.CREATE)
+    file.writeString(serialized)
+    file.close()
 }
