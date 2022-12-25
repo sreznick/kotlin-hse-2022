@@ -1,5 +1,4 @@
-
-interface Point: DimentionAware
+interface Point : DimensionAware
 
 /**
  * Реализация Point по умолчаению
@@ -9,5 +8,35 @@ interface Point: DimentionAware
  *
  * Сама коллекция параметров недоступна, доступ - через методы интерфейса
  */
-class DefaultPoint: Point {
+class DefaultPoint(private vararg val coordinates: Int) : Point {
+    init {
+        if (ndim == 0) {
+            throw PointArgumentException.EmptyPointException()
+        }
+        for (coordinate in coordinates.withIndex()) {
+            if (coordinate.value < 0) {
+                throw PointArgumentException.NegativeCoordinateException(coordinate.index, coordinate.value)
+            }
+        }
+    }
+
+    override val ndim: Int
+        get() = coordinates.size
+
+    override fun dim(i: Int): Int {
+        if (i < 0 || i >= ndim) {
+            throw PointArgumentException.IllegalPointCoordinateIndexException(ndim, i)
+        }
+        return coordinates[i]
+    }
+
+}
+
+sealed class PointArgumentException(reason: String = "") : IllegalArgumentException(reason) {
+    class EmptyPointException : PointArgumentException()
+
+    class NegativeCoordinateException(index: Int, value: Int) : ShapeArgumentException("$index coordinate is $value")
+
+    class IllegalPointCoordinateIndexException(ndim: Int, index: Int) :
+        ShapeArgumentException("Point's ndim is $ndim, calling coordinate index is $index")
 }
