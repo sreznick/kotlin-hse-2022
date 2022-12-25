@@ -5,10 +5,10 @@
  * For more details take a look at the 'Building Java & JVM projects' chapter in the Gradle
  * User Manual available at https://docs.gradle.org/7.2/userguide/building_java_projects.html
  */
-
+import org.jetbrains.kotlin.gradle.tasks.KotlinCompile
 plugins {
     // Apply the org.jetbrains.kotlin.jvm Plugin to add support for Kotlin.
-    id("org.jetbrains.kotlin.jvm") version "1.5.0"
+    id("org.jetbrains.kotlin.jvm") version "1.7.10"
 
     // Apply the application plugin to add support for building a CLI application in Java.
     application
@@ -17,26 +17,50 @@ plugins {
 repositories {
     // Use Maven Central for resolving dependencies.
     mavenCentral()
+    maven("https://jitpack.io")
 }
 
+val ktor_version = "2.1.3"
 dependencies {
+
+    implementation("com.fasterxml.jackson.module:jackson-module-kotlin:2.11.2")
     // Align versions of all Kotlin components
     implementation(platform("org.jetbrains.kotlin:kotlin-bom"))
 
     // Use the Kotlin JDK 8 standard library.
-    implementation("org.jetbrains.kotlin:kotlin-stdlib-jdk8")
+//    implementation("org.jetbrains.kotlin:kotlin-stdlib-jdk8")
+
+//    implementation("io.ktor:ktor-server-core:2.1.3")
+//    implementation("io.ktor:ktor-server-netty:2.1.3")
+    implementation("io.ktor:ktor-client-core:2.1.3")
+    implementation("io.ktor:ktor-client-cio:$ktor_version")
 
     // This dependency is used by the application.
     implementation("com.google.guava:guava:30.1.1-jre")
 
+    implementation("com.soywiz.korlibs.korio:korio:3.4.0")
+    implementation("com.soywiz.korlibs.korio:korio-jvm:2.6.0")
+
+    implementation("com.github.jkcclemens:khttp:0.1.0")
+//    implementation("com.fasterxml.jackson.core:jackson-core:2.14.1")
+    implementation("org.jetbrains.kotlinx:kotlinx-coroutines-core:1.6.4")
     // Use the Kotlin test library.
-    testImplementation("org.jetbrains.kotlin:kotlin-test")
+//    testImplementation("org.jetbrains.kotlin:kotlin-test")
 
     // Use the Kotlin JUnit integration.
-    testImplementation("org.jetbrains.kotlin:kotlin-test-junit")
+//    testImplementation("org.jetbrains.kotlin:kotlin-test-junit")
+    testImplementation(kotlin("test"))
 }
 
 application {
     // Define the main class for the application.
     mainClass.set("homework03.AppKt")
+}
+
+tasks.test {
+    useJUnitPlatform()
+}
+
+tasks.withType<KotlinCompile> {
+    kotlinOptions.jvmTarget = "1.8"
 }
