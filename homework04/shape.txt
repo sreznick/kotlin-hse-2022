@@ -1,0 +1,8 @@
+Êþº¾   4  Shape  java/lang/Object  DimensionAware  	SizeAware  Lkotlin/Metadata; mv           k xi   0 d1 #À
+
+
+
+ÀfÀ2020Â¨ d2 LShape; LDimensionAware; LSizeAware;
+homework01Shape.kt
+SourceFile RuntimeVisibleAnnotations                  7  	 
+ I  I  [ s  [ s s s s 
