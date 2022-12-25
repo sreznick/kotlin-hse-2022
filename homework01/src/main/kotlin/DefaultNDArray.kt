@@ -1,5 +1,4 @@
-
-interface NDArray: SizeAware, DimentionAware {
+interface NDArray : SizeAware, DimentionAware {
     /*
      * Получаем значение по индексу point
      *
@@ -59,6 +58,7 @@ interface NDArray: SizeAware, DimentionAware {
      * Аналогично, если размерность this - (10, 3, 5), а размерность other - (10, 5), то мы для пять раз прибавим
      * other к каждому срезу последней размерности
      */
+
     fun add(other: NDArray)
 
     /*
@@ -83,11 +83,134 @@ interface NDArray: SizeAware, DimentionAware {
  *
  * Инициализация - через factory-методы ones(shape: Shape), zeros(shape: Shape) и метод copy
  */
-class DefaultNDArray: NDArray {
+
+class DefaultNDArray private constructor(val shape: DefaultShape, private val elements: IntArray) : NDArray {
+    override val size: Int
+        get() = elements.size
+    override val ndim: Int
+        get() = shape.ndim
+    private val shapeMultiplied = IntArray(shape.ndim) { 1 }
+
+    init {
+        shapeMultiplied[0] = (1 until shape.ndim).fold(1) { a, i -> a * shape.dim(i) }
+        (1 until shape.ndim).map {
+            shapeMultiplied[it] = shapeMultiplied[it - 1] / shape.dim(it)
+        }
+    }
+
+
+    override fun at(point: Point): Int {
+        checkPointIsCorrect(point)
+        return elements[get1DPositionFromPoint(point)]
+    }
+
+    override fun set(point: Point, value: Int) {
+        checkPointIsCorrect(point)
+        elements[get1DPositionFromPoint(point)] = value
+    }
+
+    override fun copy(): NDArray = DefaultNDArray(shape, elements.clone())
+
+    override fun view(): NDArray = DefaultNDArray(shape, elements)
+
+    override fun add(other: NDArray) {
+        when (ndim - other.ndim) {
+            0 -> {
+                (0 until ndim).map {
+                    if (dim(it) != other.dim(it)) throw NDArrayException.IllegalNDArrayDimensionException(other)
+                }
+                for (i in 0 until size) {
+                    elements[i] += other.at(getPointFromPosition(i, ndim))
+                }
+            }
+            1 -> {
+                (other.ndim - 1 downTo 0).map {
+                    if (dim(it + 1) != other.dim(it)) throw NDArrayException.IllegalNDArrayDimensionException(other)
+                }
+                for (i in 0 until size / dim(0)) {
+                    for (j in 0 until dim(0)) {
+                        elements[i * dim(0) + j] += other.at(getPointFromPosition(i, ndim - 1))
+                    }
+                }
+            }
+            else -> throw NDArrayException.IllegalNDArrayDimensionException(other)
+        }
+    }
+
+    override fun dot(other: NDArray): NDArray {
+        if (ndim != 2 || other.ndim != 2 || dim(1) != other.dim(0)) {
+            throw NDArrayException.IllegalNDArrayDimensionException(other)
+        }
+        val newShape = DefaultShape(dim(0), other.dim(1))
+        val newElements = IntArray(newShape.dim(0) * newShape.dim(1)) { 0 }
+        var ind = 0
+        for (i in (0 until newShape.dim(0))) {
+            for (j in 0 until newShape.dim(1)) {
+                for (k in 0 until dim(1)) {
+                    newElements[ind] += this.at(DefaultPoint(i, k)) * other.at(DefaultPoint(k, j))
+                }
+                ind++
+            }
+        }
+        return DefaultNDArray(newShape, newElements)
+    }
+
+    override fun dim(i: Int): Int = shape.dim(i)
+
+    private fun checkPointIsCorrect(point: Point) {
+        if (point.ndim != ndim) throw NDArrayException.IllegalPointDimensionException(point)
+        (0 until ndim).map {
+            if (point.dim(it) >= dim(it))
+                throw NDArrayException.IllegalPointCoordinateException(point)
+        }
+    }
+
+    private fun get1DPositionFromPoint(point: Point): Int {
+        return (0 until shape.ndim).fold(0) { acc, i -> acc + shapeMultiplied[i] * point.dim(i) }
+    }
+
+    private fun getPointFromPosition(i: Int, dims: Int): Point {
+        var clonedI = i
+        val pointCoordinates =
+            IntArray(dims) { (clonedI / shapeMultiplied[it]).also { _ -> clonedI %= shapeMultiplied[it] } }
+        return DefaultPoint(*pointCoordinates)
+    }
+
+    companion object {
+        fun zeros(shape: DefaultShape): NDArray {
+            val size = (0 until shape.ndim).fold(1) { acc, i -> acc * shape.dim(i) }
+            return DefaultNDArray(shape, IntArray(size) { 0 })
+        }
+
+        fun ones(shape: DefaultShape): NDArray {
+            val size = (0 until shape.ndim).fold(1) { acc, i -> acc * shape.dim(i) }
+            return DefaultNDArray(shape, IntArray(size) { 1 })
+        }
+    }
 }
 
-sealed class NDArrayException : Exception() {
-    /* TODO: реализовать требуемые исключения */
-    // IllegalPointCoordinateException
-    // IllegalPointDimensionException
+
+sealed class NDArrayException(reason: String = "") : Exception(reason) {
+
+    class IllegalPointCoordinateException(point: Point) : NDArrayException(
+        reason = "Point coordinates are: ${
+            (0 until point.ndim).map { i ->
+                point.dim(i)
+            }.toIntArray().contentToString()
+        }"
+    )
+
+    class IllegalPointDimensionException(point: Point) :
+        NDArrayException(reason = "Number of dimensions is invalid: ${point.ndim}")
+
+    class IllegalNDArrayDimensionException(array: NDArray) : NDArrayException(
+        reason = "Incompatible dimension: ${
+            (0 until array.ndim).map { i ->
+                array.dim(
+                    i
+                )
+            }.toIntArray().contentToString()
+        }\""
+    )
+
 }
