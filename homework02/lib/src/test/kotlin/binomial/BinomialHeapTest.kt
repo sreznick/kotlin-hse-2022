@@ -14,6 +14,7 @@ internal class BinomialHeapTest {
     fun plusSimple() {
         val simple1 = BinomialHeap.single(234)
         val simple2 = BinomialHeap.single(345)
+
         val heap1 = simple1 + simple2
         val heap2 = simple2 + simple1
 
@@ -40,7 +41,7 @@ internal class BinomialHeapTest {
 
     @Test
     fun insertionsAscending() {
-        val values = 0 .. 100000
+        val values = 0 .. 3
 
         values.fold(BinomialHeap.single(1000)) { acc, current ->
             val result = acc + current
@@ -179,6 +180,7 @@ internal class BinomialHeapTest {
         assertEquals(987654321, heapSmall.top())
         assertEquals(987654321, heapSmall.drop().top())
     }
+
 
     @Test
     fun mergeRandom() {
