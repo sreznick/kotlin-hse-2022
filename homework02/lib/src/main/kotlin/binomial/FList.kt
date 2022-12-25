@@ -14,9 +14,10 @@ package binomial
  *  Исключение Array-параметр в функции flistOf. Но даже в ней нельзя использовать цикл и forEach.
  *  Только обращение по индексу
  */
-sealed class FList<T>: Iterable<T> {
+sealed class FList<T> : Iterable<T> {
     // размер списка, 0 для Nil, количество элементов в цепочке для Cons
     abstract val size: Int
+
     // пустой ли списк, true для Nil, false для Cons
     abstract val isEmpty: Boolean
 
@@ -55,10 +56,47 @@ sealed class FList<T>: Iterable<T> {
      *
      * Также для борьбы с бойлерплейтом были введены функция и свойство nil в компаньоне
      */
-    data class Nil<T>(private val dummy: Int=0) : FList<T>() {
+    data class Nil<T>(private val dummy: Int = 0) : FList<T>() {
+        override fun iterator(): Iterator<T> = object : Iterator<T> {
+            override fun hasNext(): Boolean = false
+            override fun next(): T = Any() as T
+        }
+
+        override val size = 0
+        override val isEmpty = true
+
+        override fun <U> map(f: (T) -> U): FList<U> = Nil()
+
+        override fun filter(f: (T) -> Boolean): FList<T> = Nil()
+
+        override fun <U> fold(base: U, f: (U, T) -> U): U = base
     }
 
     data class Cons<T>(val head: T, val tail: FList<T>) : FList<T>() {
+        override fun iterator(): Iterator<T> = object : Iterator<T> {
+            var current: FList<T> = this@Cons
+            override fun hasNext(): Boolean = !current.isEmpty
+            override fun next(): T {
+                val value = (current as Cons<T>).head
+                current = (current as Cons<T>).tail
+                return value
+            }
+        }
+
+        override val size = tail.size + 1
+        override val isEmpty = false
+
+        override fun <U> map(f: (T) -> U): FList<U> = Cons(f(head), tail.map(f))
+
+        override fun filter(f: (T) -> Boolean): FList<T> {
+            return if (f(head)) {
+                Cons(head, tail.filter(f))
+            } else {
+                tail.filter(f)
+            }
+        }
+
+        override fun <U> fold(base: U, f: (U, T) -> U): U = tail.fold(f(base, head), f)
     }
 
     companion object {
@@ -69,6 +107,12 @@ sealed class FList<T>: Iterable<T> {
 
 // конструирование функционального списка в порядке следования элементов
 // требуемая сложность - O(n)
-fun <T> flistOf(vararg values: T): FList<T> {
-    TODO()
+fun <T> flistOf(vararg values: T): FList<T> = flistOfByIndex(values, 0)
+
+private fun <T> flistOfByIndex(values: Array<out T>, index: Int): FList<T> {
+    return if (index >= values.size) {
+        FList.Nil<T>()
+    } else {
+        FList.Cons<T>(values[index], flistOfByIndex(values, index + 1))
+    }
 }
