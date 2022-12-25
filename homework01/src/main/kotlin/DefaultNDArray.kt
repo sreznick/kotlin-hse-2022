@@ -1,93 +1,105 @@
 
 interface NDArray: SizeAware, DimentionAware {
-    /*
-     * Получаем значение по индексу point
-     *
-     * Если размерность point не равна размерности NDArray
-     * бросаем IllegalPointDimensionException
-     *
-     * Если позиция по любой из размерностей некорректна с точки зрения
-     * размерности NDArray, бросаем IllegalPointCoordinateException
-     */
+
     fun at(point: Point): Int
 
-    /*
-     * Устанавливаем значение по индексу point
-     *
-     * Если размерность point не равна размерности NDArray
-     * бросаем IllegalPointDimensionException
-     *
-     * Если позиция по любой из размерностей некорректна с точки зрения
-     * размерности NDArray, бросаем IllegalPointCoordinateException
-     */
     fun set(point: Point, value: Int)
 
-    /*
-     * Копируем текущий NDArray
-     *
-     */
     fun copy(): NDArray
 
-    /*
-     * Создаем view для текущего NDArray
-     *
-     * Ожидается, что будет создан новая реализация  интерфейса.
-     * Но она не должна быть видна в коде, использующем эту библиотеку как внешний артефакт
-     *
-     * Должна быть возможность делать view над view.
-     *
-     * In-place-изменения над view любого порядка видна в оригнале и во всех view
-     *
-     * Проблемы thread-safety игнорируем
-     */
     fun view(): NDArray
 
-    /*
-     * In-place сложение
-     *
-     * Размерность other либо идентична текущей, либо на 1 меньше
-     * Если она на 1 меньше, то по всем позициям, кроме "лишней", она должна совпадать
-     *
-     * Если размерности совпадают, то делаем поэлементное сложение
-     *
-     * Если размерность other на 1 меньше, то для каждой позиции последней размерности мы
-     * делаем поэлементное сложение
-     *
-     * Например, если размерность this - (10, 3), а размерность other - (10), то мы для три раза прибавим
-     * other к каждому срезу последней размерности
-     *
-     * Аналогично, если размерность this - (10, 3, 5), а размерность other - (10, 5), то мы для пять раз прибавим
-     * other к каждому срезу последней размерности
-     */
     fun add(other: NDArray)
 
-    /*
-     * Умножение матриц. Immutable-операция. Возвращаем NDArray
-     *
-     * Требования к размерности - как для умножения матриц.
-     *
-     * this - обязательно двумерна
-     *
-     * other - может быть двумерной, с подходящей размерностью, равной 1 или просто вектором
-     *
-     * Возвращаем новую матрицу (NDArray размерности 2)
-     *
-     */
     fun dot(other: NDArray): NDArray
+
+    fun getOnIndex(index: Int): Int
 }
 
-/*
- * Базовая реализация NDArray
- *
- * Конструкторы должны быть недоступны клиенту
- *
- * Инициализация - через factory-методы ones(shape: Shape), zeros(shape: Shape) и метод copy
- */
-class DefaultNDArray: NDArray {
+class DefaultNDArray private constructor(private val shape: Shape, private val points: IntArray): NDArray {
+    override val ndim: Int
+        get() = shape.ndim
+
+    override val size: Int
+        get() = shape.size
+
+    override fun dim(i: Int): Int = shape.dim(i);
+
+    override fun copy(): NDArray {
+        return DefaultNDArray(shape, points.copyOf());
+    }
+
+    override fun view(): NDArray {
+        return DefaultNDArray(shape, points);
+    }
+
+    companion object {
+        fun ones(shape: Shape): NDArray = DefaultNDArray(shape, IntArray(shape.size) {1})
+        fun zeros(shape: Shape): NDArray = DefaultNDArray(shape, IntArray(shape.size) {0})
+    }
+
+    private fun findIndexOfPoint(point: Point): Int {
+        if (ndim != point.ndim) {
+            throw NDArrayException.IllegalPointDimensionException(point);
+        }
+        var index: Int = 0
+        var dimMul: Int = size
+        for (idx in 0 until point.ndim) {
+            if (point.dim(idx) !in 0 until shape.dim(idx)) {
+                throw NDArrayException.IllegalPointCoordinateException(point)
+            }
+            dimMul /= shape.dim(idx);
+            index += point.dim(idx) * dimMul
+        }
+        return index
+    }
+
+    override fun getOnIndex(index: Int): Int = points.get(index)
+
+    override fun at(point: Point): Int = points[findIndexOfPoint(point)]
+    override fun set(point: Point, value: Int) {
+        points[findIndexOfPoint(point)] = value
+    }
+    override fun add(other: NDArray) {
+        if (other.ndim == ndim - 1) {
+            val sz: Int = size / shape.dim(ndim - 1)
+            for (i in 0 until shape.dim(ndim - 1)) {
+                for (j in 0 until sz) {
+                    points[i * sz + j] += other.getOnIndex(j)
+                }
+            }
+        }
+        for (i in 0 until size) {
+            points[i] += other.getOnIndex(i)
+        }
+    }
+
+    private fun correctShapesMultiply(other: NDArray): Boolean {
+        return shape.dim(1) == other.dim(0) && other.ndim <= 2 && ndim == 2;
+    }
+
+    override fun dot(other: NDArray): NDArray {
+        if (!correctShapesMultiply(other)) {
+            throw NDArrayException.IllegalShapeMultiplySizes(ndim, other.ndim)
+        }
+        val res = DefaultNDArray.zeros(DefaultShape(shape.dim(0), other.dim(1)))
+
+        for (i in 0 until shape.dim(0)) {
+            for (j in 0 until other.dim(1)) {
+                var cur = 0
+                for (k in 0 until shape.dim(1)) {
+                    cur += at(DefaultPoint(i, k)) * other.at(DefaultPoint(k, j))
+                }
+                res.set(DefaultPoint(i, j), cur)
+            }
+        }
+        return res
+    }
 }
 
-sealed class NDArrayException : Exception() {
-    /* TODO: реализовать требуемые исключения */
-    // IllegalPointCoordinateException
-    // IllegalPointDimensionException
+sealed class NDArrayException(reason: String = "") : Exception(reason) {
+    class IllegalPointCoordinateException(point: Point) : NDArrayException("Illegal coordinate in point: $point")
+    class IllegalPointDimensionException(point: Point) : NDArrayException("Illegal dimension in point: $point")
+    class IllegalShapeMultiplySizes(firstSize: Int, secondSize: Int) :
+        NDArrayException("Incorrect multiply shapes of $firstSize and $secondSize dimensions")
 }
