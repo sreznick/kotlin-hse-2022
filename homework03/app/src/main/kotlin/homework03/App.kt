@@ -3,6 +3,16 @@
  */
 package homework03
 
+import homework03.models.CommentsSnapshot
+import homework03.models.TopicSnapshot
+import homework03.redditClient.RedditClient
+import kotlinx.coroutines.runBlocking
+import homework03.serialization.Writer
+import homework03.serialization.csv
+import kotlinx.coroutines.async
+import java.nio.file.Paths
+
+
 class App {
     val greeting: String
         get() {
@@ -10,6 +20,33 @@ class App {
         }
 }
 
-fun main() {
-    println(App().greeting)
+// expected arguments: topicName commentTitle
+// example arguments: kotlin z02i23/what_is_dispatchersdefaults_maximum_number_of
+fun main(args: Array<String>): Unit = runBlocking {
+    val subjectsFileName = "--subjects.csv"
+    val commentsFileName = "--comments.csv"
+
+    val redditClient = RedditClient()
+
+    val topics = mutableListOf<TopicSnapshot>()
+    val comments = mutableListOf<CommentsSnapshot>()
+
+    topics.add(
+            async {
+                redditClient.getTopic(args[0])
+            }.await()
+    )
+
+    comments.add(
+            async {
+                redditClient.getComments(args[0], args[1])
+            }.await()
+    )
+
+    val subjectsCsv = csv(topics, TopicSnapshot::class)
+    val commentsCsv = csv(comments, CommentsSnapshot::class)
+
+    Writer().write(subjectsCsv, Paths.get("").toAbsolutePath().toString(), subjectsFileName)
+    Writer().write(commentsCsv, Paths.get("").toAbsolutePath().toString(), commentsFileName)
 }
+
