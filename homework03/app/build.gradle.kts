@@ -19,6 +19,8 @@ repositories {
     mavenCentral()
 }
 
+val korioVersion = "2.2.0"
+
 dependencies {
     // Align versions of all Kotlin components
     implementation(platform("org.jetbrains.kotlin:kotlin-bom"))
@@ -34,6 +36,12 @@ dependencies {
 
     // Use the Kotlin JUnit integration.
     testImplementation("org.jetbrains.kotlin:kotlin-test-junit")
+
+    // For JVM only korio
+    implementation("com.soywiz.korlibs.korio:korio-jvm:$korioVersion")
+
+    // Jackson
+    implementation("com.fasterxml.jackson.module:jackson-module-kotlin:2.14.1")
 }
 
 application {
