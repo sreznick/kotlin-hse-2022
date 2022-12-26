@@ -4,25 +4,23 @@
 package homework03
 
 
-import com.soywiz.korio.dynamic.KDynamic.Companion.map
 import kotlinx.coroutines.*
 
-//z3qwxa/additional_monads_not_defined_in_arrow
+
+const val subjectsFile = "_subjects.csv"
+const val commentsFile = "_comments.csv"
 
 fun main(args: Array<String>) = runBlocking {
-
-    val topicJobs = arrayListOf<Deferred<TopicSnapshot>>()
-    val commentJobs = arrayListOf<Deferred<CommentsSnapshot>>()
-    for (i in 0 until args.size step 2) {
-        topicJobs.add(async { RedditClient.getTopic(args[i]) })
-        commentJobs.add(async { RedditClient.getComments(args[i], args[i + 1]) })
+    try {
+        val client = RedditClient()
+        supervisorScope {
+            args.forEach {
+                launch { writeCsv(it, client) }
+            }
+        }
+    } catch (e: Exception) {
+        println("Failed to perform the requested task, $e")
+        return@runBlocking
     }
-
-    val posts = topicJobs.awaitAll().map { it.posts }.flatten()
-    val topicsCsv = csvSerialize(posts, Post::class)
-    CsvWriter.write(topicsCsv, "subjects.csv")
-
-    val comments = commentJobs.awaitAll().map { it.linearize() }.flatten()
-    val commentsCsv = csvSerialize(comments, CommentsSnapshot::class)
-    CsvWriter.write(commentsCsv, "comments.csv")
+    println("Done!")
 }

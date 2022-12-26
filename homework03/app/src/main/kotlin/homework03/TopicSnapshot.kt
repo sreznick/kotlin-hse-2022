@@ -18,12 +18,13 @@ data class SubredditData(val children: List<Child>)
 data class Child(val data: Post)
 
 
-// should be camel case
+// todo should be camel case
 data class Post(
-    val author_fullname: String,
-    val created: Double,
-    val ups: Long,
-    val downs: Long,
+    val author: String,
+    val created: Long,
+    val ups: Int,
+    val downs: Int,
     val title: String,
-    val selftext: String?
+    val selftext: String?,
+    val id: String
 )

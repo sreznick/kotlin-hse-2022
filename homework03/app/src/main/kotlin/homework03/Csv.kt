@@ -3,23 +3,18 @@ package homework03
 import kotlin.reflect.KClass
 import kotlin.reflect.full.memberProperties
 
-fun <T : Any> csvSerialize(data: Iterable<T>, klass: KClass<T>) = buildString { serializeObject(data, klass) }
-
 private val primitiveTypes = listOf(
     Int::class, Short::class, Long::class, Byte::class, Float::class, Double::class,
     Boolean::class, Char::class
 )
 
-private fun <T : Any> StringBuilder.serializeObject(data: Iterable<T>, klass: KClass<T>) {
-    serializeHeader(klass)
-    append("\n")
-
+fun <T : Any> StringBuilder.serializeIterableWithoutHeader(data: Iterable<T>, klass: KClass<T>, skips: List<String>) {
     if (data.any {
             it.javaClass.kotlin != klass
         }) throw IllegalArgumentException("not all types match")
 
     data.forEach {
-        serializeObject(it)
+        serializeObject(it, skips)
         append("\n")
     }
 }
@@ -42,9 +37,9 @@ private fun StringBuilder.serializeString(value: String) = apply {
     append('"').append(value).append('"')
 }
 
-private fun <T : Any> StringBuilder.serializeHeader(klass: KClass<T>) = apply {
+fun <T : Any> StringBuilder.serializeHeader(klass: KClass<T>, skips: List<String>) = apply {
     append("")
-    val properties = klass.memberProperties
+    val properties = klass.memberProperties.filter { it.name !in skips }
 
     when (klass) {
         String::class, in primitiveTypes -> serializeString("value")
@@ -57,9 +52,9 @@ private fun <T : Any> StringBuilder.serializeHeader(klass: KClass<T>) = apply {
     }
 }
 
-private fun StringBuilder.serializeObject(value: Any) {
+private fun StringBuilder.serializeObject(value: Any, skip: List<String>) {
     val kClass = value.javaClass.kotlin
-    val properties = kClass.memberProperties
+    val properties = kClass.memberProperties.filter { it.name !in skip }
 
     when (kClass) {
         String::class -> serializeString(value as String)

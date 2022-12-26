@@ -11,7 +11,7 @@ import io.ktor.client.request.*
 import io.ktor.serialization.jackson.*
 
 
-object RedditClient {
+class RedditClient {
     private val httpClient = HttpClient(CIO) {
         install(ContentNegotiation) {
             jackson {
@@ -73,8 +73,8 @@ object RedditClient {
         }
     }
 
-    suspend fun getComments(topicName: String, title: String): CommentsSnapshot {
-        val info: List<CommentInfo> = httpClient.get("https://www.reddit.com/r/$topicName/comments/$title/.json").body()
+    suspend fun getComments(name: String): CommentsSnapshot {
+        val info: List<CommentInfo> = httpClient.get("https://www.reddit.com/$name/.json").body()
         val main = (info[0].data.children[0] as CommentInfoChildKind3).data
         val pair = mapToSnapshot(info[1], 0, 1)
         val snap = CommentsSnapshot(
