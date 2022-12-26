@@ -21,7 +21,7 @@ repositories {
 
 dependencies {
     // Use the Kotlin JUnit 5 integration.
-    implementation(project(":ClassParser"))
+    implementation(project(":Parser"))
 
     testImplementation("org.jetbrains.kotlin:kotlin-test-junit5")
 

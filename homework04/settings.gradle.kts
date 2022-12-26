@@ -10,3 +10,4 @@
 rootProject.name = "homework04"
 include("ClassParser")
 include("HtmlParser")
+include("Parser")

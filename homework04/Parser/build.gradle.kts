@@ -21,8 +21,6 @@ repositories {
 
 dependencies {
     // Use the Kotlin JUnit 5 integration.
-    implementation(project(":Parser"))
-
     testImplementation("org.jetbrains.kotlin:kotlin-test-junit5")
 
     // Use the JUnit 5 integration.
@@ -37,7 +35,4 @@ application {
     mainClass.set("homework04.AppKt")
 }
 
-tasks.named<Test>("test") {
-    // Use JUnit Platform for unit tests.
-    useJUnitPlatform()
-}
+
