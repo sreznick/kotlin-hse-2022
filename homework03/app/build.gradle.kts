@@ -8,7 +8,7 @@
 
 plugins {
     // Apply the org.jetbrains.kotlin.jvm Plugin to add support for Kotlin.
-    id("org.jetbrains.kotlin.jvm") version "1.5.0"
+    id("org.jetbrains.kotlin.jvm") version "1.7.20"
 
     // Apply the application plugin to add support for building a CLI application in Java.
     application
@@ -34,6 +34,14 @@ dependencies {
 
     // Use the Kotlin JUnit integration.
     testImplementation("org.jetbrains.kotlin:kotlin-test-junit")
+
+    implementation("io.ktor:ktor-serialization-jackson:2.2.1")
+
+    implementation("io.ktor:ktor-client-cio:2.2.1")
+
+    implementation("io.ktor:ktor-client-content-negotiation:2.2.1")
+
+    implementation("com.soywiz.korlibs.korio:korio-jvm:2.2.0")
 }
 
 application {

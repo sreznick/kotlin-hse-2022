@@ -3,13 +3,24 @@
  */
 package homework03
 
-class App {
-    val greeting: String
-        get() {
-            return "Hello World!"
-        }
-}
 
-fun main() {
-    println(App().greeting)
+import kotlinx.coroutines.*
+
+
+const val subjectsFile = "_subjects.csv"
+const val commentsFile = "_comments.csv"
+
+fun main(args: Array<String>) = runBlocking {
+    try {
+        val client = RedditClient()
+        supervisorScope {
+            args.forEach {
+                launch { writeCsv(it, client) }
+            }
+        }
+    } catch (e: Exception) {
+        println("Failed to perform the requested task, $e")
+        return@runBlocking
+    }
+    println("Done!")
 }
