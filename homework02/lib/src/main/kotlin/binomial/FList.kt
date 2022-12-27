@@ -14,9 +14,10 @@ package binomial
  *  Исключение Array-параметр в функции flistOf. Но даже в ней нельзя использовать цикл и forEach.
  *  Только обращение по индексу
  */
-sealed class FList<T>: Iterable<T> {
+sealed class FList<T> : Iterable<T> {
     // размер списка, 0 для Nil, количество элементов в цепочке для Cons
     abstract val size: Int
+
     // пустой ли списк, true для Nil, false для Cons
     abstract val isEmpty: Boolean
 
@@ -55,10 +56,46 @@ sealed class FList<T>: Iterable<T> {
      *
      * Также для борьбы с бойлерплейтом были введены функция и свойство nil в компаньоне
      */
-    data class Nil<T>(private val dummy: Int=0) : FList<T>() {
+    data class Nil<T>(private val dummy: Int = 0) : FList<T>() {
+        override val size: Int = 0
+
+        override val isEmpty: Boolean = true
+
+        override fun <U> map(f: (T) -> U): FList<U> = nil()
+
+        override fun filter(f: (T) -> Boolean): FList<T> = nil()
+
+        override fun <U> fold(base: U, f: (U, T) -> U): U = base
+
+        override fun iterator(): Iterator<T> = object : Iterator<T> {
+            override fun hasNext(): Boolean = false
+
+            override fun next(): T = throw NoSuchElementException("FList if empty")
+        }
     }
 
     data class Cons<T>(val head: T, val tail: FList<T>) : FList<T>() {
+        override val size: Int = tail.size + 1
+        override val isEmpty: Boolean = false
+
+        override fun <U> fold(base: U, f: (U, T) -> U): U = tail.fold(f(base, head), f)
+
+        override fun filter(f: (T) -> Boolean): FList<T> = if (f(head)) Cons(head, tail.filter(f)) else tail.filter(f)
+
+        override fun <U> map(f: (T) -> U): FList<U> = Cons(f(head), tail.map(f))
+
+        override fun iterator(): Iterator<T> = object : Iterator<T> {
+            var currentElement: FList<T> = this@Cons
+
+            override fun hasNext(): Boolean = !currentElement.isEmpty
+
+            override fun next(): T {
+                if (currentElement.isEmpty) throw NoSuchElementException("FList if empty")
+                val value = (currentElement as Cons<T>).head
+                currentElement = (currentElement as Cons<T>).tail
+                return value
+            }
+        }
     }
 
     companion object {
@@ -69,6 +106,6 @@ sealed class FList<T>: Iterable<T> {
 
 // конструирование функционального списка в порядке следования элементов
 // требуемая сложность - O(n)
-fun <T> flistOf(vararg values: T): FList<T> {
-    TODO()
-}
+fun <T> flistOf(vararg values: T): FList<T> =
+    if (values.isEmpty()) FList.nil()
+    else FList.Cons(values[0], flistOf(*values.sliceArray(1 until values.size)))
