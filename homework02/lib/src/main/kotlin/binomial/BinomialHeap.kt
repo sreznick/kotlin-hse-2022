@@ -34,7 +34,7 @@ class BinomialHeap<T : Comparable<T>> private constructor(val trees: FList<Binom
      * Требуемая сложность - O(log(n))
      */
     override fun plus(other: BinomialHeap<T>): BinomialHeap<T> {
-        return BinomialHeap(merge(this.trees, other.trees, null))
+        return BinomialHeap(mergeHaskell(this.trees, other.trees))
     }
 
     /*
@@ -43,10 +43,9 @@ class BinomialHeap<T : Comparable<T>> private constructor(val trees: FList<Binom
      * Требуемая сложность - O(log(n))
      */
     operator fun plus(elem: T): BinomialHeap<T> {
-        val list = merge(
+        val list = mergeHaskell(
             FList.Cons(BinomialTree.single(elem), nil()),
-            this.trees,
-            null
+            this.trees
         )
         return BinomialHeap(list)
     }
@@ -76,33 +75,12 @@ class BinomialHeap<T : Comparable<T>> private constructor(val trees: FList<Binom
      * Требуемая сложность - O(log(n))
      */
     fun drop(): BinomialHeap<T> {
-//        var currentT = System.currentTimeMillis()
         if (trees is FList.Cons) {
-            var current = trees
-            var min = current.head
-            while (current is FList.Cons) {
-                if (min.value > current.head.value) {
-                    min = current.head
-                }
-                current = current.tail
-            }
-
-//            var after = System.currentTimeMillis() - currentT
-//            currentT = System.currentTimeMillis()
-//            if (after > 25) {
-//                throw IllegalArgumentException(this.trees.size.toString())
-//            }
+            val min = trees.fold(trees.head) { v1, v2 -> if (v1.value < v2.value) v1 else v2 }
             val heapWithRemoved: FList<BinomialTree<T>> = trees.filter { it != min }
-//            after = System.currentTimeMillis() - currentT
-//            currentT = System.currentTimeMillis()
-//            if (after > 35) {
-//                throw IllegalArgumentException(this.trees.size.toString())
-//            }
-            val merged = merge(heapWithRemoved, min.children, null)
-//            after = System.currentTimeMillis() - currentT
-//            if (after > 10) {
-//                throw IllegalArgumentException(this.trees.size.toString())
-//            }
+            val merged = min.children.fold(heapWithRemoved) { acc, i ->
+                mergeHaskell(acc, FList.Cons(i, FList.Nil()))
+            }
             return BinomialHeap(merged)
         } else {
             throw IllegalArgumentException()
@@ -111,76 +89,57 @@ class BinomialHeap<T : Comparable<T>> private constructor(val trees: FList<Binom
 
 
     companion object {
+
         fun <T : Comparable<T>> single(value: T): BinomialHeap<T> {
             return BinomialHeap(FList.Cons(BinomialTree.single(value), nil()))
         }
 
-        private fun <T : Comparable<T>> merge(
-            b1: FList<BinomialTree<T>>,
-            b2: FList<BinomialTree<T>>,
-            curry: BinomialTree<T>?
-        ): FList<BinomialTree<T>> {
-            if (b1 is FList.Cons && b2 is FList.Cons) {
-                val t1 = b1.head
-                val t2 = b2.head
-                if (t1.order < t2.order) {
-                    if (curry != null) {
-                        if (curry.order == t1.order) {
-                            val curryA = curry.plus(t1)
-                            return merge(b1.tail, b2, curryA)
-                        } else if (curry.order == t2.order) {
-                            val curryA = curry.plus(t2)
-                            return merge(b1, b2.tail, curryA)
-                        } else {
-                            if (curry.order > t1.order) {
-                                if (curry.order > t2.order) {
-                                    return FList.Cons(
-                                        t1,
-                                        FList.Cons(t2, FList.Cons(curry, merge(b1.tail, b2.tail, null)))
-                                    )
-                                } else {
-                                    return FList.Cons(
-                                        t1,
-                                        FList.Cons(curry, FList.Cons(t2, merge(b1.tail, b2.tail, null)))
-                                    )
-                                }
-                            } else {
-                                return FList.Cons(curry, FList.Cons(t1, FList.Cons(t2, merge(b1.tail, b2.tail, null))))
-                            }
-                        }
-                    } else {
-                        val tail = merge(b1.tail, b2.tail, null)
-                        return FList.Cons(t1, FList.Cons(t2, tail))
-                    }
-                } else if (t1.order > t2.order) {
-                    return merge(b2, b1, curry)
-                } else {
-                    val tail = merge(b1.tail, b2.tail, t1.plus(t2))
-                    if (curry != null) {
-                        return FList.Cons(curry, tail)
-                    } else {
-                        return tail
-                    }
-                }
-            } else if (b1 is FList.Nil && b2 is FList.Cons) {
-                val t2 = b2.head
-                if (curry == null) {
-                    return b2
-                } else {
-                    if (curry.order == t2.order) {
-                        return merge(b1, b2.tail, curry.plus(t2))
-                    } else {
-                        return FList.Cons(curry, b2)
-                    }
-                }
-            } else if (b1 is FList.Cons) {
-                return merge(b2, b1, curry)
+        private fun <T : Comparable<T>> hRank(list: FList<BinomialTree<T>>): Int {
+            if (list is FList.Nil) {
+                return 0
             } else {
-                if (curry == null) {
-                    return nil()
+                return (list as FList.Cons).head.order
+            }
+        }
+
+        //https://hackage.haskell.org/package/TreeStructures-0.0.2/docs/src/Data-Heap-Binomial.html
+        private fun <T : Comparable<T>> mergeHaskell(
+            b1: FList<BinomialTree<T>>,
+            b2: FList<BinomialTree<T>>
+        ): FList<BinomialTree<T>> {
+            if (b1 is FList.Nil) {
+                return b2
+            }
+            if (b2 is FList.Nil) {
+                return b1
+            }
+
+            (b1 as FList.Cons)
+            (b2 as FList.Cons)
+
+            val h1 = b1.head
+            val h2 = b2.head
+            val t1 = b1.tail
+            val t2 = b2.tail
+            if (h1.order == h2.order) {
+                val merged = h1.plus(h2)
+                if (merged.order != hRank(t1)) {
+                    if (merged.order != hRank(t2)) {
+                        return FList.Cons(merged, mergeHaskell(t1, t2))
+                    } else {
+                        return mergeHaskell(FList.Cons(merged, t1), t2)
+                    }
                 } else {
-                    return FList.Cons(curry, nil())
+                    if (merged.order != hRank(t2)) {
+                        return mergeHaskell(t1, FList.Cons(merged, t2))
+                    } else {
+                        return FList.Cons(merged, mergeHaskell(t1, t2))
+                    }
                 }
+            } else if (h1.order < h2.order) {
+                return FList.Cons(h1, mergeHaskell(t1, b2))
+            } else {
+                return FList.Cons(h2, mergeHaskell(t2, b1))
             }
         }
     }

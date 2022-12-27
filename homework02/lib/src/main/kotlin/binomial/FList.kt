@@ -94,6 +94,8 @@ sealed class FList<T> : Iterable<T> {
 
         override fun iterator(): Iterator<T> {
 
+            //Важное уточнение.
+            //В итераторе можно var для хранения состояния использовать во второй домашке.
             var current: FList<T> = this
 
             return object : Iterator<T> {
@@ -123,27 +125,11 @@ sealed class FList<T> : Iterable<T> {
         }
 
         override fun filter(f: (T) -> Boolean): FList<T> {
-            val rev = this.reverse()
-            val iter = rev.iterator()
-            var current: FList<T> = nil()
-            while (iter.hasNext()) {
-                val item = iter.next()
-                if (f(item)) {
-                    current = Cons(item, current)
-                }
-
-            }
-            return current
+            return filter1(f, this)
         }
 
         override fun <U> fold(base: U, f: (U, T) -> U): U {
-            val iter = iterator()
-            var current = base
-            while (iter.hasNext()) {
-                val item = iter.next()
-                current = f(current, item)
-            }
-            return current
+            return fold1(base, f, this)
         }
     }
 
@@ -151,20 +137,20 @@ sealed class FList<T> : Iterable<T> {
         fun <T> nil() = Nil<T>()
         val nil = Nil<Any>()
 
-        private fun <U, T> fold(base: U, f: (U, T) -> U, list: FList<T>): U {
+        private fun <U, T> fold1(base: U, f: (U, T) -> U, list: FList<T>): U {
             if (list is Cons) {
-                return fold(f(base, list.head), f, list.tail)
+                return fold1(f(base, list.head), f, list.tail)
             } else {
                 return base
             }
         }
 
-        private fun <T> filter(f: (T) -> Boolean, list: FList<T>): FList<T> {
+        private fun <T> filter1(f: (T) -> Boolean, list: FList<T>): FList<T> {
             if (list is Cons) {
                 if (f(list.head)) {
-                    return Cons(list.head, filter(f, list.tail))
+                    return Cons(list.head, filter1(f, list.tail))
                 } else {
-                    return filter(f, list.tail)
+                    return filter1(f, list.tail)
                 }
             } else {
                 return nil()
