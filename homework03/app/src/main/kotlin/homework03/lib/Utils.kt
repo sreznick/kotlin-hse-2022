@@ -47,7 +47,7 @@ class Utils {
             return res;
         }
 
-        private fun toLinearComment(it: CommentSnapshot, discussionId: String?): LinearComment =
+        fun toLinearComment(it: CommentSnapshot, discussionId: String?): LinearComment =
             LinearComment(it.creationTime, it.upVotes, it.downVotes, it.text, it.author, it.id, it.parentId, discussionId)
 
         fun getDiscussionLinks(topicSnapshot: TopicSnapshot, discussionIdGenerator: IdGenerator): List<Pair<String?, String>>? =
