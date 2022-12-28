@@ -38,5 +38,5 @@ dependencies {
 
 application {
     // Define the main class for the application.
-    mainClass.set("homework03.MainKt")
+    mainClass.set("homework03.AppKt")
 }
