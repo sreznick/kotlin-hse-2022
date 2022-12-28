@@ -12,18 +12,20 @@ import java.io.FileOutputStream
 class App {
     val httpClient = RedditClient();
 
-    val discussionIdGenerator = Utils.IdGenerator(1);
+    val topicIdGenerator = Utils.IdGenerator(1);
     val greeting: String
         get() {
             return "Hello World!"
         }
 
-    suspend fun parseComments(link: String, discussionId: String?): List<LinearComment> {
+    suspend fun parseComments(link: String): List<LinearComment> {
         val commentsRaw = httpClient.getComments(link);
         if (commentsRaw?.comments == null) {
             throw RuntimeException("Error while parsing comments")
         }
-        return getLinear(commentsRaw.comments, discussionId);
+
+
+        return getLinear(commentsRaw.comments);
     }
 
 
@@ -35,8 +37,9 @@ class App {
             }
 
             //Гарантируется за счет строки выше
-            val linksPairs = Utils.getDiscussionLinks(topic, discussionIdGenerator)!!
-            val linearComments = linksPairs.map { async { parseComments(it.second, it.first) } }.map { it.await() }.flatten()
+            val links = Utils.getDiscussionLinks(topic)!!
+            val linearComments = links.map { async { parseComments(it) } }.map { it.await() }.flatten()
+
 
             Pair(topic.discussions, linearComments)
         }
