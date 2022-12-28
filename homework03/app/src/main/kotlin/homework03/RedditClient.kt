@@ -45,12 +45,17 @@ class RedditClient {
             val res = httpClient.readBytes(generateLinkByPermLink(permLink))
             Utils.parseComments(Utils.ungzip(res))
         }
-        val commentsMain = commentsMainAsync.await()
-        val comments = commentsMain.getOrNull(1)
-        if (comments == null) {
-            null
-        } else {
-            CommentsSnapshot(comments)
+        try {
+            val commentsMain = commentsMainAsync.await()
+            val comments = commentsMain.getOrNull(1)
+            if (comments == null) {
+                null
+            } else {
+                CommentsSnapshot(comments)
+            }
+        } catch (e: Http.HttpException) {
+            println(generateLinkByPermLink(permLink) == "https://www.reddit.com/r/Pokimane/comments/y4qikp/daydreamin_ω_poki_n_aria_3/.json")
+            throw e;
         }
     }
 }
