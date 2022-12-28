@@ -51,7 +51,7 @@ internal class NDArrayTest {
         data.set(DefaultPoint(3, 4), 34)
 
         for (i in 0 until 10) {
-            for (j in 0 until 3) {
+            for (j in 0 until 5) {
                 if (i == 3 && j == 4) {
                     assertEquals(34, data.at(DefaultPoint(i, j)))
                 } else {
@@ -79,7 +79,7 @@ internal class NDArrayTest {
         data.set(DefaultPoint(3, 4, 6), 34)
 
         for (i in 0 until 10) {
-            for (j in 0 until 3) {
+            for (j in 0 until 5) {
                 for (k in 0 until 8) {
                     if (i == 3 && j == 4 && k == 6) {
                         assertEquals(34, data.at(DefaultPoint(i, j, k)))
