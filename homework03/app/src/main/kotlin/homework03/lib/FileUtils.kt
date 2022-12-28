@@ -1,13 +1,12 @@
 package homework03.lib
 
-import com.soywiz.korio.util.escape
 import java.io.OutputStream
 import kotlin.reflect.KClass
 import kotlin.reflect.full.memberProperties
 
-fun <T : Any> csvSerialize(data: Iterable<T>, klass: KClass<T>) = buildString { serializeObject(data, klass) }
+fun <T: Any> csvSerialize(data: Iterable<T>, klass: KClass<T>) = buildString { serializeObject(data, klass) }
 
-private fun <T : Any> StringBuilder.serializeObject(data: Iterable<T>, klass: KClass<T>) {
+private fun <T: Any> StringBuilder.serializeObject(data: Iterable<T>, klass: KClass<T>) {
     serializeHeader(klass)
     append("\n")
 
@@ -31,7 +30,6 @@ private fun StringBuilder.serializeValue(value: Any) = apply {
         String::class -> {
             serializeString(value as String)
         }
-
         Integer::class, Short::class, Long::class, Byte::class, Float::class, Double::class -> {
             serializeNumber(value as Number)
         }
@@ -40,11 +38,11 @@ private fun StringBuilder.serializeValue(value: Any) = apply {
 
 private fun StringBuilder.serializeString(value: String) = apply {
     append('"')
-    append(value.escape())
+    append(value)
     append('"')
 }
 
-private fun <T : Any> StringBuilder.serializeHeader(klass: KClass<T>) = apply {
+private fun <T: Any> StringBuilder.serializeHeader(klass: KClass<T>) = apply {
     append("")
     val properties = klass.memberProperties
 
@@ -52,7 +50,6 @@ private fun <T : Any> StringBuilder.serializeHeader(klass: KClass<T>) = apply {
         String::class -> {
             serializeString("value")
         }
-
         else -> {
             properties.joinTo(this, ",") { p ->
                 serializeString(p.name)
@@ -70,7 +67,6 @@ private fun StringBuilder.serializeObject(value: Any) {
         String::class -> {
             serializeString(value as String)
         }
-
         else -> {
             properties.joinTo(this, ",") { p ->
                 serializeValue(p.get(value) ?: "")
