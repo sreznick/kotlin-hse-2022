@@ -34,12 +34,6 @@ dependencies {
 
     // Use the Kotlin JUnit integration.
     testImplementation("org.jetbrains.kotlin:kotlin-test-junit")
-
-    implementation ("com.fasterxml.jackson.dataformat:jackson-dataformat-xml:2.14.1")
-
-    implementation("com.soywiz.korlibs.korio:korio-jvm:2.2.0")
-
-    implementation("org.jetbrains.kotlin:kotlin-reflect:1.5")
 }
 
 application {
