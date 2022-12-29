@@ -20,6 +20,8 @@ repositories {
 }
 
 dependencies {
+
+
     // Align versions of all Kotlin components
     implementation(platform("org.jetbrains.kotlin:kotlin-bom"))
 
@@ -34,6 +36,29 @@ dependencies {
 
     // Use the Kotlin JUnit integration.
     testImplementation("org.jetbrains.kotlin:kotlin-test-junit")
+
+    /* -------------------------------------- */
+    val ktor_version: String = "1.5.0"
+
+
+//    implementation("io.ktor:ktor-jackson:$ktor_version")
+//    implementation("io.ktor:ktor-network:$ktor_version")
+//    implementation("io.ktor:ktor-client-core:$ktor_version")
+//    implementation("io.ktor:ktor-client-json:$ktor_version")
+//    implementation("io.ktor:ktor-client-cio:$ktor_version")
+//    implementation("io.ktor:ktor-websockets:$ktor_version")
+//    implementation("io.ktor:ktor-client-websockets:$ktor_version")
+//    implementation("io.ktor:ktor-client-logging:$ktor_version")
+
+    implementation("io.ktor:ktor-client-core-jvm:2.0.3")
+    implementation("io.ktor:ktor-client-cio-jvm:2.0.3")
+    implementation("io.ktor:ktor-client-content-negotiation:2.0.3")
+    implementation("io.ktor:ktor-serialization-jackson:2.0.3")
+    implementation("com.fasterxml.jackson.module:jackson-module-kotlin:2.14.+")
+//    implementation("io.ktor:ktor-server:1.5.0")
+//    implementation("io.ktor:ktor-client:1.5.0")
+//    implementation("io.ktor:ktor-client-json:1.5.0")
+//    implementation("io.ktor:ktor-client-cio:1.5.0")
 }
 
 application {
