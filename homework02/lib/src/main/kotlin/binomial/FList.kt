@@ -1,5 +1,7 @@
 package binomial
 
+import kotlin.reflect.typeOf
+
 /*
  * FList - реализация функционального списка
  *
@@ -56,9 +58,54 @@ sealed class FList<T>: Iterable<T> {
      * Также для борьбы с бойлерплейтом были введены функция и свойство nil в компаньоне
      */
     data class Nil<T>(private val dummy: Int=0) : FList<T>() {
+        override val size: Int = 0
+        override val isEmpty: Boolean = true
+
+        override fun <U> fold(base: U, f: (U, T) -> U): U = base
+
+        override fun filter(f: (T) -> Boolean): FList<T> = nil()
+
+        override fun <U> map(f: (T) -> U): FList<U> = nil()
+
+        override fun iterator(): Iterator<T> = NilIterator()
+
+        private class NilIterator<T>() : Iterator<T> {
+            override fun hasNext(): Boolean = false
+
+            override fun next(): T {
+                throw NoSuchElementException()
+            }
+        }
     }
 
     data class Cons<T>(val head: T, val tail: FList<T>) : FList<T>() {
+        // tail is either cons or nil
+
+        override val size: Int = 1 + tail.size
+        override val isEmpty: Boolean = false
+
+        override fun <U> fold(base: U, f: (U, T) -> U): U = tail.fold(f(base, head), f)
+
+        override fun filter(f: (T) -> Boolean): FList<T> = if (f(head)) Cons(head, tail.filter(f)) else tail.filter(f)
+
+        override fun <U> map(f: (T) -> U): FList<U> = Cons(f(head), tail.map(f))
+
+        override fun iterator(): Iterator<T> = ConsIterator(this)
+
+        private class ConsIterator<T>(var list: FList<T>) : Iterator<T> {
+            override fun hasNext(): Boolean = list is Cons<T>
+
+            override fun next(): T {
+                if (list !is Cons<T>) {
+                    throw NoSuchElementException()
+                }
+                val res: T = (list as Cons<T>).head
+                list = (list as Cons<T>).tail
+                return res
+            }
+        }
+
+
     }
 
     companion object {
@@ -67,8 +114,16 @@ sealed class FList<T>: Iterable<T> {
     }
 }
 
+
 // конструирование функционального списка в порядке следования элементов
 // требуемая сложность - O(n)
-fun <T> flistOf(vararg values: T): FList<T> {
-    TODO()
+fun <T> flistOf(vararg values: T): FList<T>  {
+    fun <T>flistOfImpl(index: Int, list: FList<T>, vararg values: T): FList<T> {
+        if (index < 0) return list
+        return flistOfImpl(index - 1, FList.Cons(values[index], list), *values)
+    }
+    return flistOfImpl(values.size - 1, FList.nil(), *values)
 }
+
+
+
