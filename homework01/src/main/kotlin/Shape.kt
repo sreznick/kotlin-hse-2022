@@ -1,23 +1,21 @@
 
 interface Shape: DimentionAware, SizeAware
 
-/**
- * Реализация Point по умолчаению
- *
- * Должны работать вызовы DefaultShape(10), DefaultShape(12, 3), DefaultShape(12, 3, 12, 4, 56)
- * с любым количество параметров
- *
- * При попытке создать пустой Shape бросается EmptyShapeException
- *
- * При попытке указать неположительное число по любой размерности бросается NonPositiveDimensionException
- * Свойство index - минимальный индекс с некорректным значением, value - само значение
- *
- * Сама коллекция параметров недоступна, доступ - через методы интерфейса
- */
 class DefaultShape(private vararg val dimentions: Int): Shape {
+    init {
+        if (dimentions.isEmpty()) throw ShapeArgumentException.EmptyShapeException();
+    }
+
+    override val ndim = dimentions.size
+    override val size = dimentions.foldIndexed(1) {
+       ind, res, i -> if (i <= 0) throw ShapeArgumentException.NonPositiveDimensionException(ind, i) else res * i
+    }
+    override fun dim(i : Int) = dimentions[i]
 }
 
 sealed class ShapeArgumentException (reason: String = "") : IllegalArgumentException(reason) {
-    // EmptyShapeException
-    // NonPositiveDimensionException(val index: Int, val value: Int)
+    class EmptyShapeException : ShapeArgumentException("Trying to create empty shape");
+
+    class NonPositiveDimensionException(index: Int, value: Int) :
+        ShapeArgumentException("Trying to create shape with non positive dimension $value at position $index.")
 }
