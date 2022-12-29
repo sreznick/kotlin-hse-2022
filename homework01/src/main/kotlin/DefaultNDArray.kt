@@ -141,8 +141,8 @@ class DefaultNDArray private constructor(
             }
         } else if (other.ndim == ndim - 1) {
             if (other is DefaultNDArray) {
-                for (i in 0 until values.size) {
-                    val j = i % (values.size / shape.dim(shape.ndim - 1))
+                for (i in 0 until size) {
+                    val j = i % other.size
                     values[i] += other.values[j]
                 }
             } else {
@@ -162,7 +162,25 @@ class DefaultNDArray private constructor(
     }
 
     override fun dot(other: NDArray): NDArray {
-        TODO("Not yet implemented")
+        if (ndim != 2 || other.ndim > 2) {
+            throw NDArrayException.IllegalPointDimensionException()
+        } else if (other.ndim == 2) {
+            if (dim(1) != other.dim(0)) {
+                throw NDArrayException.IllegalPointDimensionException()
+            }
+            val newSize = other.dim(1) * dim(0)
+            val newValues : IntArray = IntArray(newSize).apply {fill(0)}
+            for (i in 0 until dim(0)) {
+                for (j in 0 until other.dim(1)) {
+                    for (k in 0 until dim(1)) {
+                        newValues[i * dim(0) + j] += values[i * dim(1) + k] * (other as DefaultNDArray).values[j + k * other.dim(0)]
+                    }
+                }
+            }
+            return DefaultNDArray(DefaultShape(dim(0), other.dim(1)), 0, newValues)
+        } else {
+            return DefaultNDArray(DefaultShape(dim(0), other.dim(1)), 0)
+        }
     }
 
     override val size: Int
