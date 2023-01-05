@@ -1,4 +1,3 @@
-
 interface Shape: DimentionAware, SizeAware
 
 /**
@@ -14,10 +13,26 @@ interface Shape: DimentionAware, SizeAware
  *
  * Сама коллекция параметров недоступна, доступ - через методы интерфейса
  */
-class DefaultShape(private vararg val dimentions: Int): Shape {
+class DefaultShape(private vararg val dimensions: Int): Shape {
+    init {
+        if (dimensions.isEmpty()) {
+            throw ShapeArgumentException.EmptyShapeException()
+        }
+        for (i in dimensions.indices) {
+            if (dimensions[i] < 1) {
+                throw ShapeArgumentException.NonPositiveDimensionException(i, dimensions[i])
+            }
+        }
+    }
+    override val ndim = dimensions.size
+    override fun dim(i: Int):Int = dimensions[i]
+
+    override val size: Int = dimensions.reduce { acc, x -> acc * x }
 }
 
 sealed class ShapeArgumentException (reason: String = "") : IllegalArgumentException(reason) {
     // EmptyShapeException
     // NonPositiveDimensionException(val index: Int, val value: Int)
+    class EmptyShapeException() : ShapeArgumentException()
+    class NonPositiveDimensionException(val index: Int, val value: Int) : ShapeArgumentException()
 }

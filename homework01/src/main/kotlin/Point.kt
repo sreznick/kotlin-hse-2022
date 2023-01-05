@@ -9,5 +9,9 @@ interface Point: DimentionAware
  *
  * Сама коллекция параметров недоступна, доступ - через методы интерфейса
  */
-class DefaultPoint: Point {
+class DefaultPoint(private vararg val ArrayOfPoints: Int): Point {
+    override val ndim: Int = ArrayOfPoints.size
+    override fun dim(i: Int): Int {
+        return ArrayOfPoints[i]
+    }
 }
