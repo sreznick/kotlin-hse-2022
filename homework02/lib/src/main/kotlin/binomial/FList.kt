@@ -14,7 +14,7 @@ package binomial
  *  Исключение Array-параметр в функции flistOf. Но даже в ней нельзя использовать цикл и forEach.
  *  Только обращение по индексу
  */
-sealed class FList<T>: Iterable<T> {
+sealed class FList<T> : Iterable<T> {
     // размер списка, 0 для Nil, количество элементов в цепочке для Cons
     abstract val size: Int
     // пустой ли списк, true для Nil, false для Cons
@@ -56,9 +56,29 @@ sealed class FList<T>: Iterable<T> {
      * Также для борьбы с бойлерплейтом были введены функция и свойство nil в компаньоне
      */
     data class Nil<T>(private val dummy: Int=0) : FList<T>() {
+        override fun iterator(): Iterator<T> {
+            return FListIterator(this)
+        }
+
+        override val size = 0
+        override val isEmpty = true
+        override fun <U> map(f: (T) -> U): FList<U> = nil()
+        override fun filter(f: (T) -> Boolean): FList<T> = nil()
+        override fun <U> fold(base: U, f: (U, T) -> U): U = base
     }
 
     data class Cons<T>(val head: T, val tail: FList<T>) : FList<T>() {
+        override fun iterator(): Iterator<T> {
+            return FListIterator(this)
+        }
+
+        override val size = 1 + tail.size
+        override val isEmpty = false
+        override fun <U> map(f: (T) -> U): FList<U> = Cons(f(head), tail.map(f))
+        override fun filter(f: (T) -> Boolean): FList<T> {
+            if (f(head)) return Cons(head, tail.filter(f)) else return tail.filter(f)
+        }
+        override fun <U> fold(base: U, f: (U, T) -> U): U = tail.fold(f(base, head), f)
     }
 
     companion object {
@@ -67,8 +87,20 @@ sealed class FList<T>: Iterable<T> {
     }
 }
 
+
+class FListIterator<T>(private var flist: FList<T>) : Iterator<T> {
+    override fun hasNext() = (flist.size != 0)
+    override fun next(): T {
+        if (!hasNext()) throw NoSuchElementException("no elements")
+        val headIt = (flist as FList.Cons<T>).head
+        flist = (flist as FList.Cons<T>).tail
+        return headIt
+    }
+}
+
 // конструирование функционального списка в порядке следования элементов
 // требуемая сложность - O(n)
 fun <T> flistOf(vararg values: T): FList<T> {
-    TODO()
+    if (values.isEmpty()) return FList.nil()
+    return values.reversed().fold<T, FList<T>>(FList.nil()) { acc, cur -> FList.Cons(cur, acc) }.reverse()
 }
