@@ -16,7 +16,7 @@ internal class MyNDArrayTest {
 
     @Test
     fun testMicroAdd() {
-        val a = DefaultNDArray.zeroes(DefaultShape(2, 3))
+        val a = DefaultNDArray.zeros(DefaultShape(2, 3))
         val b = DefaultNDArray.ones(DefaultShape(2))
         b.set(DefaultPoint(0), 12)
         a.add(b)
@@ -25,7 +25,7 @@ internal class MyNDArrayTest {
 
     @Test
     fun testSmallAdd() {
-        val a = DefaultNDArray.zeroes(DefaultShape(3, 2, 2))
+        val a = DefaultNDArray.zeros(DefaultShape(3, 2, 2))
         val b = DefaultNDArray.ones(DefaultShape(3, 2))
         b.set(DefaultPoint(0, 1), 13)
         b.set(DefaultPoint(1, 0), 200)
@@ -66,7 +66,7 @@ internal class MyNDArrayTest {
 
     @Test
     fun testView() {
-        val a = DefaultNDArray.zeroes(DefaultShape(2, 3))
+        val a = DefaultNDArray.zeros(DefaultShape(2, 3))
         val b = a.view()
         a.set(DefaultPoint(1, 0), -9)
         b.set(DefaultPoint(0, 1), 10)
@@ -91,7 +91,7 @@ internal class MyNDArrayTest {
 
     @Test
     fun testView2() {
-        var a: NDArray? = DefaultNDArray.zeroes(DefaultShape(2, 3))
+        var a: NDArray? = DefaultNDArray.zeros(DefaultShape(2, 3))
         val b = a?.view()
         a?.set(DefaultPoint(1, 0), -9)
         b?.set(DefaultPoint(0, 1), 10)
@@ -139,7 +139,7 @@ internal class MyNDArrayTest {
     }
 
     private fun matrixToNDArray(a: Array<IntArray>): NDArray {
-        val ans = DefaultNDArray.zeroes(DefaultShape(a.size, a[0].size))
+        val ans = DefaultNDArray.zeros(DefaultShape(a.size, a[0].size))
         for (i in 0 until ans.dim(0))
             for (j in 0 until ans.dim(1))
                 ans.set(DefaultPoint(i, j), a[i][j])
@@ -148,7 +148,7 @@ internal class MyNDArrayTest {
 
     private fun arrayToNDArray(n: Int, vararg a: Int): NDArray {
         val m = a.size / n
-        val ans = DefaultNDArray.zeroes(DefaultShape(n, m))
+        val ans = DefaultNDArray.zeros(DefaultShape(n, m))
         for (i in 0 until n)
             for (j in 0 until m)
                 ans.set(DefaultPoint(i, j), a[i * m + j])

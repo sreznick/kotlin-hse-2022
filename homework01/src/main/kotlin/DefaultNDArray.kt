@@ -96,11 +96,11 @@ class DefaultNDArray private constructor(private val array: IntArray, private va
 
     private fun getExactIndex(point: Point): Int {
         if (ndim != point.ndim)
-            throw NDArrayException.IllegalPointDimensionException()
+            throw NDArrayException.IllegalPointDimensionException(ndim, point.ndim)
         var ind = 0
         for (i in 0 until ndim) {
             if (point.dim(i) !in 0 until dim(i))
-                throw NDArrayException.IllegalPointCoordinateException()
+                throw NDArrayException.IllegalPointCoordinateException(i, point.dim(i), dim(i))
             ind += point.dim(i) * dims[i + 1]
         }
         return ind
@@ -108,7 +108,7 @@ class DefaultNDArray private constructor(private val array: IntArray, private va
 
     private fun getPointIndex(i: Int, trunc: Int): Point {
         if (i >= size)
-            throw NDArrayException.IllegalIntCoordinateException()
+            throw NDArrayException.IllegalIntCoordinateException(i, size)
         var num = i / dims[ndim - trunc]
         val coordinates = IntArray(ndim - trunc)
         for (j in coordinates.size - 1 downTo 0) {
@@ -121,7 +121,7 @@ class DefaultNDArray private constructor(private val array: IntArray, private va
     companion object {
         fun ones(shape: Shape): NDArray = DefaultNDArray(shape, 1)
 
-        fun zeroes(shape: Shape): NDArray = DefaultNDArray(shape, 0)
+        fun zeros(shape: Shape): NDArray = DefaultNDArray(shape, 0)
     }
 
     override fun dim(i: Int): Int = dims[i] / dims[i + 1]
@@ -152,7 +152,7 @@ class DefaultNDArray private constructor(private val array: IntArray, private va
             throw NDArrayException.IncompatibleArgumentsException()
         val n = dim(0)
         val l = dim(1)
-        val m = when (other.ndim) { 1 -> 1 else -> other.dim(1) }
+        val m = if (other.ndim == 1) 1 else other.dim(1)
         val newDims = if (other.ndim == 1) intArrayOf(n, 1) else intArrayOf(m * n, m, 1)
         val newArray = IntArray(newDims[0])
         for (i in 0 until n)
@@ -165,11 +165,14 @@ class DefaultNDArray private constructor(private val array: IntArray, private va
     }
 }
 
-class DefaultNDArrayViewer(val a: NDArray) : NDArray by a
+class DefaultNDArrayViewer(a: NDArray) : NDArray by a
 
-sealed class NDArrayException : Exception() {
-    class IllegalPointCoordinateException : NDArrayException()
-    class IllegalIntCoordinateException : NDArrayException()
-    class IllegalPointDimensionException : NDArrayException()
-    class IncompatibleArgumentsException : NDArrayException()
+sealed class NDArrayException(s: String) : Exception(s) {
+    class IllegalPointCoordinateException(i: Int, it: Int, end: Int)
+        : NDArrayException("Illegal coordinate at index $i: $it found, but expected to be less than $end")
+    class IllegalIntCoordinateException(i: Int, size: Int)
+        : NDArrayException("Illegal dim: found $i, but expected to be less than $size")
+    class IllegalPointDimensionException(a: Int, b: Int)
+        : NDArrayException("Dimensions must be equals: found $a != $b")
+    class IncompatibleArgumentsException : NDArrayException("Incompatible dimensions for operation")
 }
