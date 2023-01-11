@@ -82,21 +82,17 @@ interface NDArray : SizeAware, DimensionAware {
  *
  * Инициализация - через factory-методы ones(shape: Shape), zeros(shape: Shape) и метод copy
  */
-class DefaultNDArray private constructor(shape: Shape, initValue: Int) : NDArray {
+class DefaultNDArray private constructor(private val shape: Shape, private val data: IntArray) : NDArray {
     override val size = shape.size
     override val ndim = shape.ndim
     private val dimensions = IntArray(ndim) { i -> shape.dim(i) }
-    private val data = IntArray(size) { initValue }
 
     override fun dim(i: Int): Int = dimensions[i]
 
     companion object {
-        fun zeros(shape: Shape): NDArray = DefaultNDArray(shape, 0)
-        fun ones(shape: Shape): NDArray = DefaultNDArray(shape, 1)
-    }
-
-    private constructor (other: DefaultNDArray) : this(DefaultShape(*IntArray(other.ndim) { i -> other.dim(i) }), 0) {
-        this.add(other)
+        private fun createWithValue(shape: Shape, initValue: Int): NDArray = DefaultNDArray(shape, IntArray(shape.size) { initValue })
+        fun zeros(shape: Shape): NDArray = createWithValue(shape, 0)
+        fun ones(shape: Shape): NDArray = createWithValue(shape, 1)
     }
 
     override fun at(point: Point): Int {
@@ -108,7 +104,7 @@ class DefaultNDArray private constructor(shape: Shape, initValue: Int) : NDArray
     }
 
     override fun copy(): NDArray {
-        return DefaultNDArray(this)
+        return DefaultNDArray(shape, data.copyOf())
     }
 
     override fun view(): NDArray {
@@ -151,7 +147,7 @@ class DefaultNDArray private constructor(shape: Shape, initValue: Int) : NDArray
                 val layerSize = size / dim(missingDimension)
                 for (d in 0 until dim(missingDimension)) {
                     for (i in 0 until layerSize) {
-                        data[d * layerSize + i] += (other as DefaultNDArray).data[i]
+                        data[i * dim(missingDimension) + d] += (other as DefaultNDArray).data[i]
                     }
                 }
             }
@@ -193,7 +189,8 @@ class DefaultNDArray private constructor(shape: Shape, initValue: Int) : NDArray
         }
         var layerSize = size
         var index = 0
-        for (i in ndim - 1 downTo 0) {
+//        for (i in ndim - 1 downTo 0) {
+        for (i in 0 until ndim) {
             layerSize /= dim(i)
             if (point.dim(i) >= dim(i)) {
                 throw NDArrayException.IllegalPointCoordinateException()
@@ -222,7 +219,7 @@ internal class NDArrayView(private val ndArray: NDArray) : NDArray {
     }
 
     override fun view(): NDArray {
-        return NDArrayView(this)
+        return NDArrayView(this.ndArray)
     }
 
     override fun add(other: NDArray) {
@@ -234,8 +231,8 @@ internal class NDArrayView(private val ndArray: NDArray) : NDArray {
     }
 }
 
-sealed class NDArrayException : Exception() {
-    class IllegalPointCoordinateException : NDArrayException()
-    class IllegalPointDimensionException : NDArrayException()
-    class NDArrayDimensionMismatchException : NDArrayException()
+sealed class NDArrayException(reason: String = "") : Exception(reason) {
+    class IllegalPointCoordinateException : NDArrayException("Point dimension is invalid")
+    class IllegalPointDimensionException : NDArrayException("Number of point dimensions is invalid")
+    class NDArrayDimensionMismatchException : NDArrayException("Dimensions do not match")
 }
